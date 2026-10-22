@@ -12,6 +12,7 @@
   --wood-dark: #a77a40;
   --steel: #9aa3ab;
   --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
   --body: "Nunito Sans", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -57,16 +58,21 @@ body {
 .top p { margin: 0; }
 
 .for {
-  font-family: var(--display);
-  font-size: 20px;
-  font-weight: 600;
+  font-family: var(--hand);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .from {
-  font-size: 15px;
-  color: var(--ink-soft);
-  font-style: italic;
+  font-family: var(--hand);
+  font-size: 22px;
+  color: var(--rose-deep);
+  transform: rotate(-3deg);
 }
+
+/* the hidden holder for the wobble filter */
+.defs { position: absolute; width: 0; height: 0; }
 
 .bottom {
   text-align: center;
@@ -88,9 +94,10 @@ body {
   animation: fade-in 0.6s ease-out both;
 }
 
+/* uses `translate` (not `transform`) so it doesn't undo the patch's tilt */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; translate: 0 8px; }
+  to   { opacity: 1; translate: 0 0; }
 }
 
 .scene.leaving {
@@ -98,7 +105,7 @@ body {
 }
 
 @keyframes fade-out {
-  to { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 0; translate: 0 -8px; }
 }
 
 h1 {
@@ -116,27 +123,81 @@ h1 {
   font-size: 18px;
 }
 
-/* Buttons */
-.primary {
-  min-height: 56px;
-  padding: 0 30px;
+/* A fabric patch, sewn on with a running stitch */
+.patch {
+  position: relative;
+  padding: 34px 22px 30px;
+  background-color: var(--card);
+  /* a very faint woven texture on the patch */
+  background-image:
+    repeating-linear-gradient(45deg, rgba(184, 100, 110, 0.035) 0 2px, transparent 2px 7px);
+  border-radius: 6px 10px 7px 12px;     /* uneven corners, like cut fabric */
+  box-shadow: 0 1px 2px rgba(79, 61, 51, 0.12), 0 8px 22px rgba(79, 61, 51, 0.08);
+  transform: rotate(-0.6deg);
+}
+
+/* the stitches around the edge */
+.patch::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 2px dashed var(--rose);
+  border-radius: 4px 8px 5px 10px;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.patch > * { transform: rotate(0.6deg); }   /* keep the contents level */
+
+/* a wavy line of stitches under the heading */
+.stitch-line {
+  width: 150px;
+  height: 12px;
+  margin: -4px 0 -2px;
+}
+
+.stitch-line path {
+  fill: none;
+  stroke: var(--sage);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+  stroke-linecap: round;
+}
+
+/* Buttons: a fabric label with stitches around it */
+.label-btn {
+  position: relative;
+  min-height: 58px;
+  padding: 0 32px;
   font: inherit;
   font-size: 19px;
   font-weight: 700;
   color: #fff;
-  background: var(--rose);
+  background-color: var(--rose);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px);
   border: 0;
-  border-radius: 999px;
-  box-shadow: 0 3px 0 var(--rose-deep);
+  border-radius: 8px 11px 9px 12px;
+  box-shadow: 0 2px 0 var(--rose-deep), 0 6px 14px rgba(148, 67, 79, 0.18);
+  transform: rotate(-1deg);
   cursor: pointer;
 }
 
-.primary:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--rose-deep);
+.label-btn::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.75);
+  border-radius: 5px 8px 6px 9px;
+  pointer-events: none;
 }
 
-.primary:focus-visible,
+.label-btn:active {
+  transform: rotate(-1deg) translateY(2px);
+  box-shadow: 0 0 0 var(--rose-deep), 0 3px 8px rgba(148, 67, 79, 0.18);
+}
+
+.label-btn:focus-visible,
 .needle-art:focus-visible {
   outline: 3px solid var(--sage);
   outline-offset: 4px;

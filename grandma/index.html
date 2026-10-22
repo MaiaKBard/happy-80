@@ -17,10 +17,18 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- A "hand-drawn" filter: it gently wobbles the edges of anything that uses it -->
+  <svg class="defs" aria-hidden="true" focusable="false">
+    <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="8" />
+      <feDisplacementMap in="SourceGraphic" scale="3.5" />
+    </filter>
+  </svg>
+
   <main class="page">
     <header class="top">
       <p class="for">For Grandma</p>
@@ -28,12 +36,15 @@
     </header>
 
     <!-- Thread the needle -->
-    <section class="scene" id="scene-start">
+    <section class="scene patch" id="scene-start">
       <h1>A little something, just for you.</h1>
+      <svg class="stitch-line" viewBox="0 0 200 12" aria-hidden="true">
+        <path d="M4 6c20-6 40 6 64 0s44-6 66 0 44 6 62 0" filter="url(#wobble)" />
+      </svg>
       <p class="sub">Made slowly, stitch by stitch.</p>
 
       <button class="needle-art" id="needle-art" aria-label="Thread the needle">
-        <svg viewBox="0 0 260 200" aria-hidden="true">
+        <svg viewBox="0 0 260 200" aria-hidden="true" filter="url(#wobble)">
           <!-- spool of thread -->
           <g class="spool">
             <rect x="38" y="62" width="64" height="12" rx="4" class="wood" />
@@ -56,11 +67,11 @@
         </svg>
       </button>
 
-      <button class="primary" id="thread-btn">Thread the needle</button>
+      <button class="label-btn" id="thread-btn">Thread the needle</button>
     </section>
 
     <!-- The quilt (next chunk) -->
-    <section class="scene" id="scene-quilt" hidden>
+    <section class="scene patch" id="scene-quilt" hidden>
       <h1>Eighty years, one patch at a time.</h1>
       <p class="sub">The quilt comes next.</p>
     </section>
