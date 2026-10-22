@@ -334,7 +334,7 @@ body {
 
 .candle {
   position: relative;
-  width: 34px;                /* wide + tall tap area, bigger than it looks */
+  width: 29px;                /* tall tap area, bigger than it looks */
   padding: 10px 0 0;
   font: inherit;
   font-size: 16px;
@@ -601,5 +601,12 @@ body {
   min-height: 1.2em;
   font-size: 13px;
   color: var(--amber);
+}
+
+/* The little candle "to grow on" (1 year) */
+.candle.little {
+  width: 24px;
+  font-size: 12px;
+  padding-top: 18px;        /* shorter, so it sits lower than the big ones */
 }
 

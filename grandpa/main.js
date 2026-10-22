@@ -1,6 +1,6 @@
 /*
-  BDAY-OS v8.0
-  Hi Grandpa. Yes, I wrote this for you. Happy 80th. Love, Maia
+  BDAY-OS v8.1
+  Hi Grandpa. Yes, I wrote this for you. Happy 81st. Love, Maia
 */
 
 // Your words (edit these)
@@ -196,10 +196,10 @@ muteBtn.addEventListener("click", () => {
 async function boot() {
   skipBtn.hidden = false;
 
-  await typeLine([["BDAY-OS v8.0", "title"]]);
+  await typeLine([["BDAY-OS v8.1", "title"]]);
   await typeLine([["A very special release.", "dim"]]);
   await typeLine([[""]]);
-  await typeLine([["Checking memory... "], ["80 years found", "ok", 500]]);
+  await typeLine([["Checking memory... "], ["81 years found", "ok", 500]]);
   await typeLine([["Loading wisdom.dll... "], ["OK", "ok", 400]]);
   await typeLine([["Loading stories.db... "], ["OK", "ok", 400]]);
   await typeLine([["Warning: candle count exceeds safe limits", "warn"]]);
@@ -227,13 +227,14 @@ skipBtn.addEventListener("click", () => {
 });
 
 // The cake
-const CANDLES = 8;            // 8 candles x 10 years = 80
-const YEARS_PER_CANDLE = 10;
+// 8 big candles worth 10 years each, plus one little candle "to grow on" worth 1.
+const CANDLE_YEARS = [10, 10, 10, 10, 10, 10, 10, 10, 1];
+const AGE = CANDLE_YEARS.reduce((total, years) => total + years, 0);   // 81
 const CAKE_WIDTH = 30;        // characters inside the cake's side walls
 
-let candlesLit = CANDLES;
-let shownYears = CANDLES * YEARS_PER_CANDLE;   // number currently on screen
-let counterLine;              // the "candles: 80/80" line
+let yearsLit = AGE;           // years still burning on the cake
+let shownYears = AGE;         // number currently on screen
+let counterLine;              // the "candles: 81/81" line
 let candleRow;                // the row of candle buttons
 let rolling = null;           // the running counter animation (a Promise), if any
 let wished = false;           // so the final message prints only once
@@ -252,7 +253,7 @@ function cakeRows() {
     cakeRow("", "~"),
     cakeRow("H A P P Y"),
     cakeRow("", "~"),
-    cakeRow("8 0"),
+    cakeRow("8 1"),
     cakeRow("", "_"),
     "(" + "_".repeat(CAKE_WIDTH) + ")",
   ];
@@ -262,8 +263,8 @@ function cakeRows() {
 // `command` is what shows at the top, like "> cake" or "> blow".
 async function showCake(command, introLine = "") {
   // fresh start: relight everything
-  candlesLit = CANDLES;
-  shownYears = CANDLES * YEARS_PER_CANDLE;
+  yearsLit = AGE;
+  shownYears = AGE;
   wished = false;
   clearTimeout(idleTimer);
 
@@ -279,22 +280,26 @@ async function showCake(command, introLine = "") {
   terminal.appendChild(scene);
 
   // Big glowing headline, typed one word at a time
-  for (const word of ["HAPPY", "80TH", "GRANDPA"]) {
+  for (const word of ["HAPPY", "81ST", "GRANDPA"]) {
     await typeLine([[word]], headline);
   }
   removeCursor();
 
   // Candles: real buttons, so they can be tapped (and reached with a keyboard)
   candleRow = make("div", "candles nudge");   // "nudge" = glow brighter until the first tap
-  for (let i = 1; i <= CANDLES; i++) {
-    const candle = make("button", "candle");
-    candle.setAttribute("aria-label", `Blow out candle ${i} of ${CANDLES}`);
+  CANDLE_YEARS.forEach((years, i) => {
+    const little = years === 1;
+    const candle = make("button", little ? "candle little" : "candle");
+    candle.dataset.years = years;
+    candle.setAttribute("aria-label", little
+      ? "Blow out the little candle (1 year)"
+      : `Blow out candle ${i + 1} (10 years)`);
     candle.style.setProperty("--delay", `${random(0, 900)}ms`);   // flames flicker out of sync
     candle.innerHTML = '<span class="flame" aria-hidden="true">(<br>)</span>' +
                        '<span class="wick" aria-hidden="true">|<br>|</span>';
     candle.addEventListener("click", () => blowOut(candle));
     candleRow.appendChild(candle);
-  }
+  });
   cakeBox.appendChild(candleRow);
 
   // Build the cake row by row
@@ -308,7 +313,7 @@ async function showCake(command, introLine = "") {
 
   counterLine = make("div", "counter");
   updateCounter();
-  cakeBox.append(counterLine, make("div", "caption dim", "1 candle = 10 years"));
+  cakeBox.append(counterLine, make("div", "caption dim", "big candle = 10 years, little = 1"));
   addBlowChoice(cakeBox);
   showCursor();
   terminal.scrollTop = terminal.scrollHeight;   // make sure the buttons are on screen
@@ -316,14 +321,14 @@ async function showCake(command, introLine = "") {
 }
 
 function updateCounter() {
-  counterLine.textContent = `candles: ${shownYears}/80`;
+  counterLine.textContent = `candles: ${shownYears}/${AGE}`;
 }
 
 // If nothing has been tapped after 8 seconds, give a gentle terminal-style hint.
 function startIdleHint() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(async () => {
-    if (busy || !counterLine.isConnected || candlesLit < CANDLES) return;
+    if (busy || !counterLine.isConnected || yearsLit < AGE) return;
     const tip = mic.analyser ? "blow a little closer to the mic" : "candles are still lit";
     await typeLine([["> hint: ", "dim"], [tip, "warn"]]);
   }, 8000);
@@ -336,16 +341,17 @@ function blowOut(candle) {
   candle.disabled = true;
   candleRow.classList.remove("nudge");
   clearTimeout(idleTimer);
-  candlesLit--;
+  const years = Number(candle.dataset.years);
+  yearsLit -= years;
   sound.whoosh();
-  puffSmoke(candle);
+  puffSmoke(candle, years);
   rollCounter();
   return true;
 }
 
-// Ten little wisps of smoke, one for each year in that candle
-function puffSmoke(candle) {
-  for (let i = 0; i < YEARS_PER_CANDLE; i++) {
+// Little wisps of smoke, one for each year in that candle
+function puffSmoke(candle, years) {
+  for (let i = 0; i < years; i++) {
     const wisp = make("span", "wisp", "~");
     wisp.style.setProperty("--dx", `${random(-22, 22)}px`);
     wisp.style.setProperty("--rise", `${random(30, 60)}px`);
@@ -355,18 +361,18 @@ function puffSmoke(candle) {
   }
 }
 
-// Count the number down like an odometer: 80, 79, 78 ... 70.
+// Count the number down like an odometer: 81, 80, 79 ... 71.
 // If he taps fast, the one running roll keeps going until it catches up.
 // We keep its Promise so commands can wait for it (and the finale) to finish.
 function rollCounter() {
   if (!rolling) {
     rolling = (async () => {
-      while (shownYears > candlesLit * YEARS_PER_CANDLE) {
+      while (shownYears > yearsLit) {
         shownYears--;
         updateCounter();
         await wait(45);
       }
-      if (candlesLit === 0) await allOut();
+      if (yearsLit === 0) await allOut();
       rolling = null;
     })();
   }
@@ -380,7 +386,8 @@ async function allOut() {
   stopMic();
   document.querySelector(".choice")?.remove();
   await wait(400);
-  await typeLine([["80 = 0b01010000", "ok"]]);
+  // 81 in binary is 01010001, which still fits in one byte (8 bits)
+  await typeLine([[`${AGE} = 0b${AGE.toString(2).padStart(8, "0")}`, "ok"]]);
   await typeLine([["still fits in a single byte. make a wish!"]]);
 }
 
@@ -444,7 +451,7 @@ async function startMic() {
 
   if (!sound.ctx) sound.start();
   const ctx = sound.ctx;
-  if (!ctx || !counterLine.isConnected || candlesLit === 0) { stopMic(); return; }
+  if (!ctx || !counterLine.isConnected || yearsLit === 0) { stopMic(); return; }
   if (ctx.state === "suspended") await ctx.resume();
   mic.allowed = true;
 
@@ -474,7 +481,7 @@ async function startMic() {
 
 function listen() {
   // stop if the cake left the screen or every candle is already out
-  if (!mic.analyser || !counterLine.isConnected || candlesLit === 0) {
+  if (!mic.analyser || !counterLine.isConnected || yearsLit === 0) {
     stopMic();
     return;
   }
@@ -597,7 +604,7 @@ const COMMANDS = {
     await wait(200);
     printBlock(HEART, "heart");
     await wait(400);
-    await typeLine([["Happy 80th, Grandpa.", "big"]]);
+    await typeLine([["Happy 81st, Grandpa.", "big"]]);
     await typeLine([[""]]);
     for (const line of WISH_MESSAGE) await typeLine([[line]]);
     await typeLine([[""]]);
@@ -614,7 +621,7 @@ const COMMANDS = {
     await typeLine([["A lot of love.", "big"]]);
     await typeLine([[""]]);
     await typeLine([["Built by Maia, from scratch, for you."]]);
-    await typeLine([["For your 80th, Grandpa."]]);
+    await typeLine([["For your 81st, Grandpa."]]);
     await typeLine([[""]]);
     await typeLine([["developers: 1   frameworks: 0", "dim"]]);
     await typeLine([["plain HTML, CSS and JavaScript", "dim"]]);
@@ -687,6 +694,6 @@ powerBtn.addEventListener("click", powerOn, { once: true });
 
 // A little hello for anyone who opens the developer console.
 console.log(
-  "%cHi Grandpa. I figured you might look under the hood. Happy 80th! Love, Maia",
+  "%cHi Grandpa. I figured you might look under the hood. Happy 81st! Love, Maia",
   "color:#9df5a8;background:#0b130d;padding:6px 10px;font-family:monospace;"
 );
