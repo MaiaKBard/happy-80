@@ -33,10 +33,10 @@ function random(min, max) {
 // Type one line into the terminal.
 // `parts` is a list of [text, cssClass, pauseBeforeMs] so one line can mix colors,
 // e.g. "Loading wisdom.dll... " then a pause, then a bright "OK".
-async function typeLine(parts) {
+async function typeLine(parts, container = terminal, lineClass = "") {
   const line = document.createElement("div");
-  line.className = "line";
-  terminal.appendChild(line);
+  line.className = `line ${lineClass}`.trim();
+  container.appendChild(line);
 
   for (const [text, cls = "", pause = 0] of parts) {
     await wait(pause);
@@ -86,7 +86,7 @@ async function boot() {
   skipping = false;         // back to normal speed for the rest of the card
   showCursor();
   await wait(900);
-  // Chunk 3: the cake appears here.
+  showCake();
 }
 
 skipBtn.addEventListener("click", () => {
@@ -107,6 +107,140 @@ function showCursor(where = terminal) {
 function removeCursor() {
   const cursor = document.getElementById("cursor");
   if (cursor) cursor.remove();
+}
+
+// ---------- The cake ----------
+const CANDLES = 8;            // 8 candles x 10 years = 80
+const YEARS_PER_CANDLE = 10;
+const CAKE_WIDTH = 30;        // characters inside the cake's side walls
+
+let candlesLit = CANDLES;
+let shownYears = CANDLES * YEARS_PER_CANDLE;   // number currently on screen
+let counterLine;              // the "candles: 80/80" line
+let rolling = false;          // is the counter animation already running?
+let wished = false;           // so the final message prints only once
+
+// Center text inside the cake walls: "|      H A P P Y      |"
+function cakeRow(text, fill = " ") {
+  const space = CAKE_WIDTH - text.length;
+  const left = Math.floor(space / 2);
+  return "|" + fill.repeat(left) + text + fill.repeat(space - left) + "|";
+}
+
+function cakeRows() {
+  return [
+    "." + "-".repeat(CAKE_WIDTH) + ".",
+    cakeRow("", "~"),
+    cakeRow("H A P P Y"),
+    cakeRow("", "~"),
+    cakeRow("8 0"),
+    cakeRow("", "_"),
+    "(" + "_".repeat(CAKE_WIDTH) + ")",
+  ];
+}
+
+// Create an element with a class in one line.
+function make(tag, className, text = "") {
+  const el = document.createElement(tag);
+  el.className = className;
+  el.textContent = text;
+  return el;
+}
+
+async function showCake() {
+  terminal.innerHTML = "";
+  await typeLine([["> cake", "dim"]]);
+  await wait(300);
+
+  const scene = make("div", "scene");
+  const headline = make("div", "headline");
+  const cakeBox = make("div", "cake");
+  scene.append(headline, cakeBox);
+  terminal.appendChild(scene);
+
+  // Big glowing headline, typed one word at a time
+  for (const word of ["HAPPY", "80TH", "GRANDPA"]) {
+    await typeLine([[word]], headline);
+  }
+  removeCursor();
+
+  // Candles: real buttons, so they can be tapped (and reached with a keyboard)
+  const candleRow = make("div", "candles");
+  for (let i = 1; i <= CANDLES; i++) {
+    const candle = make("button", "candle");
+    candle.setAttribute("aria-label", `Blow out candle ${i} of ${CANDLES}`);
+    candle.style.setProperty("--delay", `${random(0, 900)}ms`);   // flames flicker out of sync
+    candle.innerHTML = '<span class="flame" aria-hidden="true">(<br>)</span>' +
+                       '<span class="wick" aria-hidden="true">|<br>|</span>';
+    candle.addEventListener("click", () => blowOut(candle));
+    candleRow.appendChild(candle);
+  }
+  cakeBox.appendChild(candleRow);
+
+  // Build the cake row by row
+  const cakeArt = make("pre", "cake-art");
+  cakeArt.setAttribute("aria-hidden", "true");
+  cakeBox.appendChild(cakeArt);
+  for (const row of cakeRows()) {
+    cakeArt.textContent += row + "\n";
+    await wait(120);
+  }
+
+  counterLine = make("div", "counter");
+  updateCounter();
+  cakeBox.append(counterLine, make("div", "caption dim", "1 candle = 10 years"));
+  cakeBox.appendChild(make("div", "caption hint", "tap a candle to blow it out"));
+  showCursor();
+}
+
+function updateCounter() {
+  counterLine.textContent = `candles: ${shownYears}/80`;
+}
+
+// Blow out one candle. Returns false if it was already out.
+function blowOut(candle) {
+  if (candle.classList.contains("out")) return false;
+  candle.classList.add("out");
+  candle.disabled = true;
+  candlesLit--;
+  puffSmoke(candle);
+  rollCounter();
+  return true;
+}
+
+// Ten little wisps of smoke, one for each year in that candle
+function puffSmoke(candle) {
+  for (let i = 0; i < YEARS_PER_CANDLE; i++) {
+    const wisp = make("span", "wisp", "~");
+    wisp.style.setProperty("--dx", `${random(-22, 22)}px`);
+    wisp.style.setProperty("--rise", `${random(30, 60)}px`);
+    wisp.style.animationDelay = `${i * 40}ms`;
+    candle.appendChild(wisp);
+    setTimeout(() => wisp.remove(), 1600);
+  }
+}
+
+// Count the number down like an odometer: 80, 79, 78 ... 70.
+// If he taps fast, it just keeps rolling until it catches up.
+async function rollCounter() {
+  if (rolling) return;
+  rolling = true;
+  while (shownYears > candlesLit * YEARS_PER_CANDLE) {
+    shownYears--;
+    updateCounter();
+    await wait(45);
+  }
+  rolling = false;
+  if (candlesLit === 0) allOut();
+}
+
+async function allOut() {
+  if (wished) return;
+  wished = true;
+  document.querySelector(".hint")?.remove();
+  await wait(400);
+  await typeLine([["80 = 0b01010000", "ok"]]);
+  await typeLine([["still fits in a single byte. make a wish!"]]);
 }
 
 // ---------- Power on ----------
