@@ -77,6 +77,8 @@ async function threadTheNeedle() {
   threaded = true;
   threadBtn.disabled = true;
   needleArt.classList.add("threaded");   // CSS draws the thread through the eye
+  sound.start();                         // this tap gives the phone permission to play sound
+  sound.threadPull();
   swapText(threadBtn, "Threaded!");
   fx.buzz();
   await wait(1100);
@@ -85,6 +87,7 @@ async function threadTheNeedle() {
   fx.burst(eyeX, eyeY, { count: 12, shapes: ["thread", "heart"], colors: ["#b8646e", "#94434f", "#8fa683"], speed: 3.5 });
   await wait(1300);
   buildQuilt();                   // build it first, so it's already there as the scene slides in
+  sound.startMusic();             // the music box begins softly
   await goTo(startScene, quiltScene);
   startQuilt();
 }
@@ -163,6 +166,7 @@ function sewSquare(square) {
   square.disabled = true;
   square.setAttribute("aria-label", "Sewn in");
   squaresSewn++;
+  sound.sew(squaresSewn - 1);     // each square plays the next note up
   nudgeNext();
   startIdleHint();
   fx.buzz(10);
@@ -223,6 +227,7 @@ async function quiltFinished() {
   centerSquare.classList.add("sewn");
   centerSquare.setAttribute("aria-label", "A birthday cake");
   fx.buzz([10, 60, 10]);
+  sound.finale();
   fx.rain(70);
   swapText(quiltTitle, "Happy 80th, Grandma!");
   swapText(quiltSub, "Eighty years, all sewn together.");
@@ -257,11 +262,13 @@ playCard.addEventListener("click", () => {
   hide(cardHint);
   playCard.classList.remove("nudge");
   playCard.classList.add("dealt");    // CSS swings it off the deck and flips it over
+  sound.deal();
   playCard.setAttribute("aria-label", `Queen of Hearts card: Happy 80th, Grandma. ${CARD_MESSAGE} ${CARD_SIGN_OFF}`);
   fx.buzz();
   swapText(cardSub, "The queen of the table, all day long.");
   setTimeout(() => {
     playCard.classList.add("flipped", "shimmer");   // a gold shine sweeps across the face
+    sound.shimmer();
     const [x, y] = fx.centerOf(playCard);
     fx.burst(x, y, { count: 18, shapes: ["heart"], colors: ["#b8646e", "#94434f", "#e0b04f"], speed: 5.5 });
   }, 1050);
@@ -307,6 +314,7 @@ wishCard.addEventListener("submit", async (event) => {
   wishError.textContent = "";
 
   wishCard.classList.add("face-down");     // the card turns over
+  sound.deal();
   fx.buzz();
   await wait(900);
   wishText.value = "";                     // the words are gone, for real
@@ -314,6 +322,7 @@ wishCard.addEventListener("submit", async (event) => {
   await wait(950);
   wishCard.classList.add("gone");          // fully tucked away, so no edges peek out
   wishDeck.classList.add("shuffling");     // and the deck gets a shuffle
+  sound.riffle();
   fx.buzz([8, 120, 8, 120, 8]);
   await wait(1100);
   wishDeck.classList.remove("shuffling");
@@ -321,6 +330,7 @@ wishCard.addEventListener("submit", async (event) => {
   // little hearts float up from the deck, carrying the wish away
   const [x, y] = fx.centerOf(wishDeck);
   fx.floatUp(x, y - 40, 18);
+  sound.wishUp();
   swapText(wishTitle, "Shuffled in.");
   swapText(wishSub, "Your wish is in the deck now. Only you know which card it is. Happy 80th, Grandma.");
   await wait(1500);
@@ -329,3 +339,14 @@ wishCard.addEventListener("submit", async (event) => {
 
 // start the whole card over from the needle
 againBtn.addEventListener("click", () => location.reload());
+
+// The music-note button
+const soundBtn = document.getElementById("sound-btn");
+soundBtn.addEventListener("click", () => {
+  sound.start();                  // in case she taps this before anything else
+  const isOn = sound.toggle();
+  soundBtn.setAttribute("aria-pressed", String(isOn));
+  soundBtn.setAttribute("aria-label", isOn
+    ? "Music and sounds are on. Tap to turn them off."
+    : "Music and sounds are off. Tap to turn them on.");
+});

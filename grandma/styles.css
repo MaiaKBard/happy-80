@@ -50,10 +50,12 @@ body {
 }
 
 .top {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;   /* name on the left, music button centered, signature on the right */
   align-items: baseline;
 }
+
+.top .from { justify-self: end; }
 
 .top p { margin: 0; }
 
@@ -79,6 +81,31 @@ body {
   height: 100%;
   pointer-events: none;     /* taps go right through it */
   z-index: 50;
+}
+
+/* the music-note button in the header */
+.sound-btn {
+  width: 44px;
+  height: 44px;
+  margin-block: -10px;      /* a big tap area without making the header taller */
+  padding: 9px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--rose-deep);
+  cursor: pointer;
+  align-self: center;
+}
+
+.sound-btn svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.sound-btn .note { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sound-btn .slash { stroke: currentColor; stroke-width: 2; stroke-linecap: round; opacity: 0; transition: opacity 0.2s; }
+.sound-btn[aria-pressed="false"] { color: var(--ink-soft); }
+.sound-btn[aria-pressed="false"] .slash { opacity: 1; }
+
+.sound-btn:focus-visible {
+  outline: 3px solid var(--sage);
+  outline-offset: 2px;
 }
 
 /* the hidden holder for the wobble filter */

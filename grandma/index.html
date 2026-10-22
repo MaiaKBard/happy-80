@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <!-- the ?v= number forces browsers to load the newest file. Bump it after every change. -->
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
   <!-- A "hand-drawn" filter: it gently wobbles the edges of anything that uses it -->
@@ -37,6 +37,13 @@
   <main class="page">
     <header class="top">
       <p class="for">For Grandma</p>
+      <!-- turns the music box and sounds on or off -->
+      <button class="sound-btn" id="sound-btn" aria-pressed="true" aria-label="Music and sounds are on. Tap to turn them off.">
+        <svg viewBox="0 0 24 24" aria-hidden="true" filter="url(#wobble)">
+          <path class="note" d="M9 18.5a2.5 2.5 0 1 1-2.5-2.5c.9 0 1.7.4 2.5 1V5l10-2v12.5a2.5 2.5 0 1 1-2.5-2.5c.9 0 1.7.4 2.5 1V7l-10 2" />
+          <path class="slash" d="M4 4l16 16" />
+        </svg>
+      </button>
       <p class="from">with love, Maia</p>
     </header>
 
@@ -168,7 +175,8 @@
     </footer>
   </main>
 
-  <script src="effects.js?v=6"></script>
-  <script src="main.js?v=6"></script>
+  <script src="effects.js?v=7"></script>
+  <script src="sound.js?v=7"></script>
+  <script src="main.js?v=7"></script>
 </body>
 </html>
