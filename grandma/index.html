@@ -1,17 +1,75 @@
 <!DOCTYPE html>
+<!--
+  For Grandma, on her 80th.
+  Made with love by Maia.
+-->
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy 80th Birthday</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Happy 80th, Grandma</title>
 
-    <!-- Link Preview-->
-    <meta property="og:title" content="Happy 80th, Grandma">
-    <meta property="og:description" content="A birthday card from Maia">
-    <meta property="og:image" content="https://MaiaKBard.github.io/happy-80/grandma/preview.png">
-    <meta property="og:type" content="website">
-    <body>
-      <h1>Hello Grandma</h1>
-    </body>
+  <!-- Link preview when texted -->
+  <meta property="og:title" content="Happy 80th, Grandma">
+  <meta property="og:description" content="A birthday card from Maia">
+  <meta property="og:image" content="https://maiakbard.github.io/happy-80/grandma/preview.png">
+  <meta property="og:type" content="website">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
+<body>
+  <main class="page">
+    <header class="top">
+      <p class="for">For Grandma</p>
+      <p class="from">with love, Maia</p>
+    </header>
+
+    <!-- Thread the needle -->
+    <section class="scene" id="scene-start">
+      <h1>A little something, just for you.</h1>
+      <p class="sub">Made slowly, stitch by stitch.</p>
+
+      <button class="needle-art" id="needle-art" aria-label="Thread the needle">
+        <svg viewBox="0 0 260 200" aria-hidden="true">
+          <!-- spool of thread -->
+          <g class="spool">
+            <rect x="38" y="62" width="64" height="12" rx="4" class="wood" />
+            <rect x="46" y="74" width="48" height="66" class="thread-wrap" />
+            <path d="M46 84h48M46 94h48M46 104h48M46 114h48M46 124h48M46 134h48" class="thread-lines" />
+            <rect x="38" y="140" width="64" height="12" rx="4" class="wood" />
+          </g>
+
+          <!-- needle -->
+          <g class="needle">
+            <path d="M196 24c5 0 8 4 8 9l-3 136-5 16-5-16-3-136c0-5 3-9 8-9z" class="needle-body" />
+            <ellipse cx="196" cy="42" rx="2.6" ry="9" class="needle-eye" />
+          </g>
+
+          <!-- thread from the spool, waiting just short of the eye -->
+          <path id="thread-lead" class="thread" d="M94 100c30 0 40-60 70-58 10 0 14 2 22 2" />
+          <!-- the part that goes through the eye (drawn when she taps) -->
+          <path id="thread-through" class="thread thread-through" pathLength="100"
+                d="M186 44c6 0 12-2 20-4 12-2 18 10 14 26-3 12-12 20-8 34" />
+        </svg>
+      </button>
+
+      <button class="primary" id="thread-btn">Thread the needle</button>
+    </section>
+
+    <!-- The quilt (next chunk) -->
+    <section class="scene" id="scene-quilt" hidden>
+      <h1>Eighty years, one patch at a time.</h1>
+      <p class="sub">The quilt comes next.</p>
+    </section>
+
+    <footer class="bottom">
+      <p>A keepsake, made one stitch at a time.</p>
+    </footer>
+  </main>
+
+  <script src="main.js"></script>
+</body>
 </html>
