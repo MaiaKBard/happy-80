@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <!-- the ?v= number forces browsers to load the newest file. Bump it after every change. -->
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <!-- A "hand-drawn" filter: it gently wobbles the edges of anything that uses it -->
@@ -123,6 +123,35 @@
       </div>
 
       <p class="hint" id="card-hint" hidden>Tap the deck to deal.</p>
+      <button class="label-btn" id="to-wish-btn" hidden>Make a wish</button>
+    </section>
+
+    <!-- The wish: written on a card, then shuffled into the deck. Never saved anywhere. -->
+    <section class="scene patch" id="scene-wish" hidden>
+      <h1 id="wish-title">Now, make a wish.</h1>
+      <p class="sub" id="wish-sub">Write it on a card. It gets shuffled into the deck, and no one will ever see it.</p>
+
+      <div class="table">
+        <div class="deck" id="wish-deck" aria-hidden="true">
+          <div class="card-back deck-card"></div>
+          <div class="card-back deck-card"></div>
+          <div class="card-back deck-card"></div>
+        </div>
+
+        <form class="wish-card" id="wish-card">
+          <span class="card-inner">
+            <span class="card-front wish-front">
+              <label for="wish-text" class="wish-label">My wish:</label>
+              <textarea id="wish-text" maxlength="140" rows="4" placeholder="Write it here..."></textarea>
+            </span>
+            <span class="card-back card-face-back"></span>
+          </span>
+        </form>
+      </div>
+
+      <p class="wish-error" id="wish-error" aria-live="polite"></p>
+      <button class="label-btn" id="shuffle-btn" type="submit" form="wish-card">Shuffle it in</button>
+      <button class="again-btn" id="again-btn" hidden>See it all again</button>
     </section>
 
     <footer class="bottom">
@@ -130,6 +159,6 @@
     </footer>
   </main>
 
-  <script src="main.js?v=3"></script>
+  <script src="main.js?v=4"></script>
 </body>
 </html>

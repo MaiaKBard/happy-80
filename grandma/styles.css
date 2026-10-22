@@ -453,6 +453,7 @@ h1 {
 /* The card table */
 .table {
   position: relative;
+  isolation: isolate;               /* so a card tucked "under" the deck stays on the table */
   width: min(78vw, 270px, 44dvh * 5 / 7);
   aspect-ratio: 5 / 7;
   margin: 6px 0 4px;
@@ -600,6 +601,104 @@ h1 {
   color: var(--rose-deep);
 }
 
+/* The wish card */
+.wish-card {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  perspective: 1000px;
+}
+
+/* here the front starts face up, and the back is underneath */
+.wish-card .wish-front { transform: none; }
+.wish-card .card-face-back { transform: rotateY(180deg); }
+
+.wish-front {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 18px 16px;
+  border: 1.5px dashed rgba(184, 100, 110, 0.5);
+}
+
+.wish-label {
+  font-family: var(--hand);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--rose-deep);
+  text-align: left;
+}
+
+#wish-text {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  padding: 4px 2px;
+  font-family: var(--hand);
+  font-size: 26px;              /* big, and over 16px so iPhones don't zoom in */
+  line-height: 32px;
+  color: var(--ink);
+  background:
+    repeating-linear-gradient(transparent 0 31px, rgba(143, 166, 131, 0.55) 31px 32px);   /* lined paper */
+  border: 0;
+  outline: none;
+}
+
+#wish-text::placeholder { color: rgba(122, 102, 88, 0.55); }
+
+.wish-card:focus-within .wish-front {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(143, 166, 131, 0.35), 0 2px 6px rgba(79, 61, 51, 0.2);
+}
+
+.wish-error {
+  min-height: 1.3em;
+  margin: 0;
+  font-weight: 700;
+  color: var(--rose-deep);
+}
+
+/* step 1: the card turns face down */
+.wish-card.face-down .card-inner { transform: rotateY(180deg); }
+.wish-card.face-down .wish-front { visibility: hidden; transition: visibility 0s 0.45s; }
+
+/* step 2: it slides out, then tucks back in under the deck */
+.wish-card.tucking { animation: tuck 0.9s ease-in-out forwards; }
+
+@keyframes tuck {
+  0%   { translate: 0 0;      rotate: 0deg;   z-index: 2; }
+  45%  { translate: -70% 4%;  rotate: -12deg; z-index: 2; }
+  55%  { translate: -70% 4%;  rotate: -12deg; z-index: -1; }
+  100% { translate: -4px 2px; rotate: -2deg;  z-index: -1; }
+}
+
+/* step 3: the deck gets a shuffle */
+.deck.shuffling .deck-card:nth-child(odd)  { animation: riffle-left 0.32s ease-in-out 3 alternate; }
+.deck.shuffling .deck-card:nth-child(even) { animation: riffle-right 0.32s ease-in-out 3 alternate; }
+
+@keyframes riffle-left  { to { translate: -38% 0; rotate: -8deg; } }
+@keyframes riffle-right { to { translate: 38% 0;  rotate: 8deg; } }
+
+.deck-card:nth-child(3) { rotate: -1deg; translate: 2px -2px; }
+
+/* the soft "start over" link at the very end */
+.again-btn {
+  min-height: 48px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--rose-deep);
+  background: none;
+  border: 1.5px dashed var(--rose);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.again-btn:focus-visible {
+  outline: 3px solid var(--sage);
+  outline-offset: 3px;
+}
+
 /* Shorter phones (like an iPhone SE): tighten everything so it fits */
 @media (max-height: 720px) {
   .page { gap: 10px; }
@@ -610,6 +709,7 @@ h1 {
   .quilt { --size: min(100%, 330px, 41dvh); }
   .counter { font-size: 18px; }
   .card-message { font-size: 15.5px; }
+  .table { width: min(78vw, 270px, 37dvh * 5 / 7); }
   .card-hello { font-size: 26px; }
 }
 

@@ -11,6 +11,7 @@ const CARD_SIGN_OFF = "Love, Maia";
 const startScene = document.getElementById("scene-start");
 const quiltScene = document.getElementById("scene-quilt");
 const cardScene = document.getElementById("scene-card");
+const wishScene = document.getElementById("scene-wish");
 const needleArt = document.getElementById("needle-art");
 const threadBtn = document.getElementById("thread-btn");
 
@@ -186,5 +187,61 @@ playCard.addEventListener("click", () => {
   playCard.setAttribute("aria-label", `Queen of Hearts card: Happy 80th, Grandma. ${CARD_MESSAGE} ${CARD_SIGN_OFF}`);
   cardSub.textContent = "The queen of the table, all day long.";
   setTimeout(() => playCard.classList.add("flipped"), 950);   // after the flip finishes
-  // Next chunk: making a wish.
+  setTimeout(() => { toWishBtn.hidden = false; }, 2200);       // give her a moment to read it
 });
+
+// Make a wish
+// She writes a wish on a blank card and it gets shuffled into the deck.
+// It's never saved or sent anywhere: once it's shuffled in, it's gone for good.
+const toWishBtn = document.getElementById("to-wish-btn");
+const wishCard = document.getElementById("wish-card");
+const wishText = document.getElementById("wish-text");
+const wishError = document.getElementById("wish-error");
+const wishDeck = document.getElementById("wish-deck");
+const shuffleBtn = document.getElementById("shuffle-btn");
+const againBtn = document.getElementById("again-btn");
+const wishTitle = document.getElementById("wish-title");
+const wishSub = document.getElementById("wish-sub");
+
+let shuffled = false;
+
+toWishBtn.addEventListener("click", async () => {
+  toWishBtn.disabled = true;
+  await goTo(cardScene, wishScene);
+});
+
+// clear the gentle reminder as soon as she starts writing
+wishText.addEventListener("input", () => { wishError.textContent = ""; });
+
+wishCard.addEventListener("submit", async (event) => {
+  event.preventDefault();          // stop the page from reloading
+  if (shuffled) return;
+  if (!wishText.value.trim()) {
+    wishError.textContent = "Write a little wish first.";
+    wishText.focus();
+    return;
+  }
+
+  shuffled = true;
+  wishText.blur();                 // put the phone keyboard away
+  wishText.readOnly = true;
+  shuffleBtn.hidden = true;
+  wishError.textContent = "";
+
+  wishCard.classList.add("face-down");     // the card turns over
+  await wait(900);
+  wishText.value = "";                     // the words are gone, for real
+  wishCard.classList.add("tucking");       // it slides under the deck
+  await wait(950);
+  wishDeck.classList.add("shuffling");     // and the deck gets a shuffle
+  await wait(1100);
+  wishDeck.classList.remove("shuffling");
+
+  wishTitle.textContent = "Shuffled in.";
+  wishSub.textContent = "Your wish is in the deck now. Only you know which card it is. Happy 80th, Grandma.";
+  await wait(1200);
+  againBtn.hidden = false;
+});
+
+// start the whole card over from the needle
+againBtn.addEventListener("click", () => location.reload());
