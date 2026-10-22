@@ -359,8 +359,33 @@ h1 {
   color: rgba(122, 102, 88, 0.45);
 }
 
-/* for now the finished middle is plain rose; the next chunk puts the message there */
-.square.center.sewn { background: var(--rose); }
+/* the finished middle square: cream fabric with a little cake */
+.square.center.sewn {
+  background: var(--card);
+  color: var(--rose);
+}
+
+.square.center svg {
+  width: 72%;
+  height: auto;
+  overflow: visible;
+}
+
+.cake-plate { fill: var(--wood); }
+.cake-body { fill: #f3dcdc; stroke: var(--rose); stroke-width: 1.5; }
+.cake-frosting { fill: var(--rose); }
+.cake-candle { fill: var(--sage); }
+.cake-flame {
+  fill: #e0a43a;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flicker 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes flicker {
+  from { transform: scale(1, 1) rotate(-4deg); }
+  to   { transform: scale(0.9, 1.12) rotate(4deg); }
+}
 
 /* Eight fabrics, all drawn with CSS gradients */
 .fabric-1 { /* rose gingham */
@@ -425,6 +450,156 @@ h1 {
   animation: fade-in 0.5s ease-out both;
 }
 
+/* The card table */
+.table {
+  position: relative;
+  width: min(78vw, 270px, 44dvh * 5 / 7);
+  aspect-ratio: 5 / 7;
+  margin: 6px 0 4px;
+}
+
+/* every card shares this shape */
+.card-back,
+.card-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(79, 61, 51, 0.2);
+}
+
+/* the back of a card: rose with a stitched lattice, like a quilt */
+.card-back {
+  background-color: var(--rose);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 14px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 14px);
+  border: 6px solid var(--card);
+}
+
+.card-back::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+}
+
+/* the deck peeks out from under the top card */
+.deck-card:nth-child(1) { rotate: -5deg; translate: -6px 6px; }
+.deck-card:nth-child(2) { rotate: 3deg;  translate: 5px 3px; }
+
+/* the top card */
+.play-card {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  perspective: 1000px;              /* gives the flip real depth */
+  transition: translate 0.5s ease-out, scale 0.5s ease-out;
+}
+
+.play-card:focus-visible {
+  outline: 3px solid var(--sage);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+/* before dealing, the deck gives a little nudge */
+.play-card.nudge { animation: wiggle 2.4s ease-in-out infinite; }
+
+.card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+
+/* dealt: the card lifts off the deck, then flips face up */
+.play-card.dealt {
+  cursor: default;
+  translate: 0 -10px;
+  scale: 1.04;
+}
+
+.play-card.dealt .card-inner { transform: rotateY(180deg); }
+
+/* safety net: once the flip is done, fully hide the back, in case a browser
+   (looking at you, Safari) gets confused about which side is facing up */
+.play-card.flipped .card-face-back { visibility: hidden; }
+
+/* the two sides of the top card; only the side facing her shows */
+.card-face-back,
+.card-front {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.card-front {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: #fffdf8;
+  border: 1px solid #e6dccb;
+  color: var(--rose-deep);
+}
+
+/* the "80 + heart" in the corners, where a Q would be */
+.corner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  line-height: 1;
+  font-family: var(--display);
+}
+
+.corner b { font-size: 20px; font-weight: 600; }
+.corner svg { width: 14px; height: 13px; margin-top: 3px; fill: var(--rose-deep); }
+/* real cards turn this corner upside down, but an upside-down 80 reads as "08",
+   so it stays upright with the heart on top instead */
+.corner-bottom { align-self: flex-end; flex-direction: column-reverse; }
+.corner-bottom svg { margin: 0 0 3px; }
+
+.card-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 4px;
+  text-align: center;
+}
+
+.crown { width: 54px; height: auto; }
+.crown path { fill: #e0b04f; stroke: #a77a40; stroke-width: 1.5; stroke-linejoin: round; }
+
+.card-hello {
+  font-family: var(--hand);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.card-message {
+  font-family: var(--display);
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.card-sign {
+  font-family: var(--hand);
+  font-size: 24px;
+  color: var(--rose-deep);
+}
+
 /* Shorter phones (like an iPhone SE): tighten everything so it fits */
 @media (max-height: 720px) {
   .page { gap: 10px; }
@@ -434,6 +609,8 @@ h1 {
   .sub { font-size: 16px; }
   .quilt { --size: min(100%, 330px, 41dvh); }
   .counter { font-size: 18px; }
+  .card-message { font-size: 15.5px; }
+  .card-hello { font-size: 26px; }
 }
 
 /* Less motion if the phone asks for it */

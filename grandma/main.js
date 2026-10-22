@@ -3,9 +3,14 @@
   Made with love by Maia.
 */
 
+// Your words on the card (edit these)
+const CARD_MESSAGE = "Wishing you a wonderful birthday, good company, and a winning hand.";
+const CARD_SIGN_OFF = "Love, Maia";
+
 // Grab the elements we need
 const startScene = document.getElementById("scene-start");
 const quiltScene = document.getElementById("scene-quilt");
+const cardScene = document.getElementById("scene-card");
 const needleArt = document.getElementById("needle-art");
 const threadBtn = document.getElementById("thread-btn");
 
@@ -127,13 +132,59 @@ async function countUp() {
 
 let finished = false;
 
+// The little cake that gets sewn into the middle square
+const CAKE_SVG = `
+  <svg viewBox="0 0 60 60" aria-hidden="true" filter="url(#wobble)">
+    <rect class="cake-candle" x="28" y="10" width="4" height="14" rx="1" />
+    <path class="cake-flame" d="M30 2c3 4 3 7 0 8-3-1-3-4 0-8z" />
+    <rect class="cake-body" x="12" y="24" width="36" height="22" rx="3" />
+    <path class="cake-frosting" d="M12 27c0-2 2-3 4-3h28c2 0 4 1 4 3 0 3-3 3-4 1-1 3-4 3-5 0-1 3-4 3-5 0-1 3-4 3-5 0-1 3-4 3-5 0-1 3-4 3-5 0-2 3-5 2-5-1z" />
+    <rect class="cake-plate" x="6" y="46" width="48" height="5" rx="2.5" />
+  </svg>`;
+
 async function quiltFinished() {
   if (finished) return;
   finished = true;
   await wait(500);
-  centerSquare.textContent = "";
-  centerSquare.classList.add("sewn", "fabric-5");
-  quiltTitle.textContent = "Eighty years, all sewn together.";
-  quiltSub.textContent = "Every one of them worth celebrating.";
-  // Next chunk: the middle square reveals the birthday message.
+  // the middle square gets sewn in last, with a cake on it
+  centerSquare.innerHTML = CAKE_SVG;
+  centerSquare.classList.add("sewn");
+  centerSquare.setAttribute("aria-label", "A birthday cake");
+  quiltTitle.textContent = "Happy 80th, Grandma!";
+  quiltSub.textContent = "Eighty years, all sewn together.";
+  await wait(1200);
+  counter.hidden = true;
+  toCardBtn.hidden = false;      // the way on to the card
 }
+
+// The card
+const toCardBtn = document.getElementById("to-card-btn");
+const playCard = document.getElementById("play-card");
+const cardSub = document.getElementById("card-sub");
+const cardHint = document.getElementById("card-hint");
+document.getElementById("card-message").textContent = CARD_MESSAGE;
+document.getElementById("card-sign").textContent = CARD_SIGN_OFF;
+
+let cardTimer;
+let dealt = false;
+
+toCardBtn.addEventListener("click", async () => {
+  toCardBtn.disabled = true;
+  await goTo(quiltScene, cardScene);
+  playCard.classList.add("nudge");
+  // after 8 quiet seconds, gently say what to do
+  cardTimer = setTimeout(() => { if (!dealt) cardHint.hidden = false; }, 8000);
+});
+
+playCard.addEventListener("click", () => {
+  if (dealt) return;
+  dealt = true;
+  clearTimeout(cardTimer);
+  cardHint.hidden = true;
+  playCard.classList.remove("nudge");
+  playCard.classList.add("dealt");    // CSS lifts it off the deck and flips it over
+  playCard.setAttribute("aria-label", `Queen of Hearts card: Happy 80th, Grandma. ${CARD_MESSAGE} ${CARD_SIGN_OFF}`);
+  cardSub.textContent = "The queen of the table, all day long.";
+  setTimeout(() => playCard.classList.add("flipped"), 950);   // after the flip finishes
+  // Next chunk: making a wish.
+});
