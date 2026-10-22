@@ -3,6 +3,7 @@
   Hi Grandpa. Yes, I wrote this for you. Happy 80th. Love, Maia
 */
 
+// ---------- Your words (edit these) ----------
 const WISH_MESSAGE = [
   "Wishing you a day full of",
   "good food, good people,",
@@ -10,7 +11,7 @@ const WISH_MESSAGE = [
 ];
 const SIGN_OFF = "Love, Maia";
 
-//Grab the elements we need
+// ---------- Grab the elements we need ----------
 const display = document.getElementById("display");
 const terminal = document.getElementById("terminal");
 const power = document.getElementById("power");
@@ -28,7 +29,7 @@ let skipping = false;
 // True while a command is printing, so two commands never type at once.
 let busy = false;
 
-// Small helpers
+// ---------- Small helpers ----------
 
 // Pause for `ms` milliseconds. Lets us write async code that reads top to bottom.
 function wait(ms) {
@@ -110,7 +111,7 @@ async function progressBar() {
   }
 }
 
-// Sound (made with code, no audio files)
+// ---------- Sound (made with code, no audio files) ----------
 // Browsers only allow sound after a tap, so it starts on the power button.
 const sound = {
   ctx: null,
@@ -191,7 +192,7 @@ muteBtn.addEventListener("click", () => {
   muteBtn.setAttribute("aria-pressed", String(!sound.on));
 });
 
-// Boot sequence 
+// ---------- Boot sequence ----------
 async function boot() {
   skipBtn.hidden = false;
 
@@ -215,6 +216,7 @@ async function boot() {
   busy = true;
   await showCake("cake");
   commands.hidden = false;  // the command buttons appear once the cake is up
+  terminal.scrollTop = terminal.scrollHeight;   // they shrink the screen, so re-scroll
   setActive("cake");
   busy = false;
 }
@@ -224,7 +226,7 @@ skipBtn.addEventListener("click", () => {
   skipBtn.hidden = true;
 });
 
-// The cake 
+// ---------- The cake ----------
 const CANDLES = 8;            // 8 candles x 10 years = 80
 const YEARS_PER_CANDLE = 10;
 const CAKE_WIDTH = 30;        // characters inside the cake's side walls
@@ -307,15 +309,9 @@ async function showCake(command, introLine = "") {
   counterLine = make("div", "counter");
   updateCounter();
   cakeBox.append(counterLine, make("div", "caption dim", "1 candle = 10 years"));
-  cakeBox.appendChild(make("div", "caption hint", "tap a candle to blow it out"));
-
-  // Optional: blow into the microphone. Only asks permission if he taps this.
-  if (navigator.mediaDevices?.getUserMedia) {
-    const micBtn = make("button", "mic-btn", "or blow into the mic");
-    micBtn.addEventListener("click", () => startMic(micBtn));
-    cakeBox.appendChild(micBtn);
-  }
+  addBlowChoice(cakeBox);
   showCursor();
+  terminal.scrollTop = terminal.scrollHeight;   // make sure the buttons are on screen
   startIdleHint();
 }
 
@@ -328,7 +324,8 @@ function startIdleHint() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(async () => {
     if (busy || !counterLine.isConnected || candlesLit < CANDLES) return;
-    await typeLine([["> hint: ", "dim"], ["candles are still lit", "warn"]]);
+    const tip = mic.analyser ? "blow a little closer to the mic" : "candles are still lit";
+    await typeLine([["> hint: ", "dim"], [tip, "warn"]]);
   }, 8000);
 }
 
@@ -380,25 +377,59 @@ async function allOut() {
   // only once, and only if this cake is still the one on screen
   if (wished || !counterLine.isConnected) return;
   wished = true;
-  document.querySelector(".hint")?.remove();
   stopMic();
+  document.querySelector(".choice")?.remove();
   await wait(400);
   await typeLine([["80 = 0b01010000", "ok"]]);
   await typeLine([["still fits in a single byte. make a wish!"]]);
 }
 
-// Blow into the microphone 
+// ---------- Blow into the microphone ----------
 // Blowing on a mic makes a loud "whoosh" of noise. We measure how loud the
 // sound is ~60 times a second; if it stays loud for a moment, that's a blow.
 const MIC_THRESHOLD = 0.2;    // how loud counts as blowing (0 to 1). Lower = more sensitive.
 const MIC_HOLD_FRAMES = 6;    // must stay loud this many frames (~0.1s) so a quick noise doesn't count
-const MIC_COOLDOWN_MS = 300;  // at most one candle per 0.3s, so one breath ≈ one or two candles
+const MIC_COOLDOWN_MS = 700;  // after each candle, ignore the mic briefly. This also stops the
+                              // phone's own whoosh sound from being heard as another blow.
 
-const mic = { stream: null, source: null, analyser: null, data: null, frame: 0, loud: 0, nextAllowed: 0 };
+const mic = {
+  allowed: false,             // true once he has said yes to the mic
+  stream: null, source: null, analyser: null, data: null,
+  frame: 0, loud: 0, nextAllowed: 0, meter: null,
+};
 
-async function startMic(button) {
-  button.disabled = true;
-  button.textContent = "asking for the mic...";
+// Swap what's shown under the cake (the mic/tap choice, the meter, or the tap hint).
+function setChoice(...nodes) {
+  document.querySelector(".choice")?.replaceChildren(...nodes);
+}
+
+function tapHint() {
+  return make("div", "caption hint", "tap a candle to blow it out");
+}
+
+// Under the cake: mic first, tapping as the backup.
+function addBlowChoice(cakeBox) {
+  const choice = make("div", "choice");
+  cakeBox.appendChild(choice);
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    choice.appendChild(tapHint());   // no mic support: tapping only
+    return;
+  }
+
+  const prompt = make("div", "caption prompt", "blow into the mic to put them out");
+  const buttons = make("div", "choice-buttons");
+  const micBtn = make("button", "mic-btn", "use the mic");
+  const tapBtn = make("button", "tap-btn", "tap instead");
+  micBtn.addEventListener("click", startMic);
+  tapBtn.addEventListener("click", () => setChoice(tapHint()));
+  buttons.append(micBtn, tapBtn);
+  choice.append(prompt, buttons);
+}
+
+async function startMic() {
+  if (mic.stream) return;       // already listening
+  setChoice(make("div", "caption", "asking for the mic..."));
   try {
     mic.stream = await navigator.mediaDevices.getUserMedia({
       // turn off the phone's "voice cleanup" so it doesn't filter out the blowing
@@ -406,15 +437,16 @@ async function startMic(button) {
     });
   } catch {
     // He said no, or the phone has no mic. Tapping still works, so just say so.
-    button.remove();
+    setChoice(tapHint());
     await typeLine([["> mic: not available. tapping works too.", "dim"]]);
     return;
   }
 
   if (!sound.ctx) sound.start();
   const ctx = sound.ctx;
-  if (!ctx) { stopMic(); return; }
+  if (!ctx || !counterLine.isConnected || candlesLit === 0) { stopMic(); return; }
   if (ctx.state === "suspended") await ctx.resume();
+  mic.allowed = true;
 
   mic.source = ctx.createMediaStreamSource(mic.stream);
   mic.analyser = ctx.createAnalyser();
@@ -428,8 +460,15 @@ async function startMic(button) {
   silent.gain.value = 0;
   mic.source.connect(mic.analyser).connect(silent).connect(ctx.destination);
 
-  button.textContent = "listening... blow!";
-  button.classList.add("listening");
+  // A little meter so he can see the mic hearing him
+  mic.meter = make("div", "meter");
+  setChoice(
+    make("div", "caption prompt", "listening... blow!"),
+    mic.meter,
+    make("div", "caption dim", "(tapping works too)"),
+  );
+  mic.nextAllowed = 0;
+  startIdleHint();
   listen();
 }
 
@@ -445,16 +484,24 @@ function listen() {
   let sum = 0;
   for (const sample of mic.data) sum += sample * sample;
   const loudness = Math.sqrt(sum / mic.data.length);
+  const level = Math.min(loudness / MIC_THRESHOLD, 1);   // 0 = silent, 1 = blowing hard enough
 
-  // make the flames lean as he blows (0 = still, 1 = blowing hard)
-  candleRow.style.setProperty("--wind", Math.min(loudness / MIC_THRESHOLD, 1).toFixed(2));
+  // flames lean and the meter fills as he blows
+  candleRow.style.setProperty("--wind", level.toFixed(2));
+  const bars = Math.round(level * 12);
+  mic.meter.textContent = `breath [${"#".repeat(bars)}${"-".repeat(12 - bars)}]`;
 
-  mic.loud = loudness > MIC_THRESHOLD ? mic.loud + 1 : 0;
   const now = performance.now();
-  if (mic.loud >= MIC_HOLD_FRAMES && now >= mic.nextAllowed) {
-    const nextCandle = candleRow.querySelector(".candle:not(.out)");
-    if (nextCandle) blowOut(nextCandle);
-    mic.nextAllowed = now + MIC_COOLDOWN_MS;
+  if (now < mic.nextAllowed) {
+    mic.loud = 0;               // cooling down: ignore everything, including our own whoosh
+  } else {
+    mic.loud = loudness > MIC_THRESHOLD ? mic.loud + 1 : 0;
+    if (mic.loud >= MIC_HOLD_FRAMES) {
+      const nextCandle = candleRow.querySelector(".candle:not(.out)");
+      if (nextCandle) blowOut(nextCandle);
+      mic.loud = 0;
+      mic.nextAllowed = now + MIC_COOLDOWN_MS;
+    }
   }
 
   mic.frame = requestAnimationFrame(listen);
@@ -465,12 +512,11 @@ function stopMic() {
   cancelAnimationFrame(mic.frame);
   mic.stream?.getTracks().forEach((track) => track.stop());
   mic.source?.disconnect();
-  Object.assign(mic, { stream: null, source: null, analyser: null, data: null, loud: 0 });
-  document.querySelector(".mic-btn")?.remove();
+  Object.assign(mic, { stream: null, source: null, analyser: null, data: null, loud: 0, meter: null });
   candleRow?.style.removeProperty("--wind");
 }
 
-// Commands 
+// ---------- Commands ----------
 const HEART = [
   " .:::.   .:::. ",
   ":::::::.:::::::",
@@ -488,14 +534,8 @@ const COMMANDS = {
 
   async blow() {
     await showCake("blow", "One big breath.");
-    clearTimeout(idleTimer);
-    await wait(500);
-    // blow out every candle that's still lit, one by one
-    for (const candle of candleRow.querySelectorAll(".candle:not(.out)")) {
-      blowOut(candle);
-      await wait(350);
-    }
-    await rolling;            // let the countdown and "make a wish!" finish
+    // If he already said yes to the mic earlier, start listening right away.
+    if (mic.allowed) startMic();
   },
 
   async wish() {
@@ -574,7 +614,7 @@ commands.addEventListener("click", (event) => {
   if (btn) runCommand(btn.dataset.cmd);
 });
 
-// Power on 
+// ---------- Power on ----------
 async function powerOn() {
   sound.start();                  // the tap gives the browser permission to play sound
   sound.beep();

@@ -177,6 +177,7 @@ body {
 
 .terminal {
   flex: 1;
+  min-height: 0;
   font-size: 16px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -463,32 +464,79 @@ body {
 }
 
 /* Microphone */
-.mic-btn {
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   margin-top: 4px;
-  min-height: 44px;
-  padding: 0 16px;
-  font: inherit;
+}
+
+.prompt {
+  color: var(--phosphor);
   font-size: 14px;
+  text-align: center;
+}
+
+.choice-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.mic-btn,
+.tap-btn {
+  min-height: 46px;
+  padding: 0 20px;
+  font: inherit;
+  font-size: 15px;
   color: var(--phosphor);
   text-shadow: inherit;
-  background: rgba(157, 245, 168, 0.06);
-  border: 1px dashed var(--phosphor-dim);
   border-radius: 8px;
   cursor: pointer;
 }
 
-.mic-btn:focus-visible {
+/* the main choice: solid and glowing */
+.mic-btn {
+  background: rgba(157, 245, 168, 0.12);
+  border: 1px solid var(--phosphor);
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+/* the backup choice: quieter */
+.tap-btn {
+  min-height: 46px;
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--phosphor-dim);
+  background: none;
+  border: 1px dashed rgba(95, 174, 107, 0.6);
+}
+
+.mic-btn:focus-visible,
+.tap-btn:focus-visible {
   outline: 2px solid var(--phosphor);
   outline-offset: 2px;
 }
 
-.mic-btn.listening {
-  border-style: solid;
-  animation: breathe 1.6s ease-in-out infinite;
+.meter {
+  font-size: 16px;
+  white-space: pre;
 }
 
 /* flames lean away as he blows. `translate` stacks on top of the flicker animation */
 .candles .flame {
   translate: calc(var(--wind, 0) * 6px) 0;
   transition: translate 0.08s linear;
+}
+
+/* Shorter phones: tighten the cake screen so it all fits */
+@media (max-height: 760px) and (max-width: 699px) {
+  .display { padding: 12px 14px; gap: 8px; }
+  .scene { gap: 10px; margin: 2px 0 6px; }
+  .headline { font-size: 26px; line-height: 1.1; }
+  .cake { font-size: 12.5px; gap: 4px; }
+  .candle { padding-top: 6px; }
+  .counter { font-size: 16px; margin-top: 2px; }
+  .choice { gap: 6px; }
 }
