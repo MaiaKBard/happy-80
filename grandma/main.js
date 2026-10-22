@@ -26,13 +26,41 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Fade one scene out and the next one in.
+// Newer browsers can smoothly morph one scene into the next (the "View Transitions" API).
+const smoothScenes = Boolean(document.startViewTransition) && !reducedMotion;
+if (smoothScenes) document.documentElement.classList.add("smooth-scenes");
+
+// Move from one scene to the next.
 async function goTo(from, to) {
+  if (smoothScenes) {
+    // the browser snapshots the old scene, we swap, and it animates between them
+    const transition = document.startViewTransition(() => {
+      from.hidden = true;
+      to.hidden = false;
+    });
+    await transition.finished.catch(() => {});
+    return;
+  }
+  // older browsers: a simple fade out, then fade in
   from.classList.add("leaving");
   await wait(450);
   from.hidden = true;
   from.classList.remove("leaving");
   to.hidden = false;
+}
+
+// Change some text with a soft fade instead of a sudden swap.
+async function swapText(el, text) {
+  if (reducedMotion) { el.textContent = text; return; }
+  await el.animate([{ opacity: 1 }, { opacity: 0, translate: "0 -4px" }], { duration: 180, easing: "ease-in" }).finished;
+  el.textContent = text;
+  el.animate([{ opacity: 0, translate: "0 4px" }, { opacity: 1, translate: "0 0" }], { duration: 320, easing: "ease-out" });
+}
+
+// A quick happy bounce
+function pop(el, size = 1.15) {
+  if (reducedMotion) return;
+  el.animate([{ scale: 1 }, { scale: size }, { scale: 1 }], { duration: 320, easing: "ease-out" });
 }
 
 // Thread the needle
@@ -43,8 +71,13 @@ async function threadTheNeedle() {
   threaded = true;
   threadBtn.disabled = true;
   needleArt.classList.add("threaded");   // CSS draws the thread through the eye
-  threadBtn.textContent = "Threaded!";
-  await wait(2300);
+  swapText(threadBtn, "Threaded!");
+  fx.buzz();
+  await wait(1100);
+  // a little sparkle of thread right at the needle's eye
+  const [eyeX, eyeY] = fx.centerOf(needleArt.querySelector(".needle-eye"));
+  fx.burst(eyeX, eyeY, { count: 12, shapes: ["thread", "heart"], colors: ["#b8646e", "#94434f", "#8fa683"], speed: 3.5 });
+  await wait(1300);
   await goTo(startScene, quiltScene);
   buildQuilt();
 }
@@ -60,6 +93,12 @@ const quiltTitle = document.getElementById("quilt-title");
 const quiltSub = document.getElementById("quilt-sub");
 const counter = document.getElementById("quilt-counter");
 const hint = document.getElementById("quilt-hint");
+
+// the main color of each fabric, for the scraps that fly off when it's sewn in
+const FABRIC_COLORS = {
+  1: ["#b8646e", "#f3dcdc"], 2: ["#8fa683", "#f6f1e6"], 3: ["#e9c98f", "#a77a40"], 4: ["#b8646e", "#8fa683", "#e0b04f"],
+  5: ["#b8646e", "#f3dcdc"], 6: ["#8fa683", "#dfe7d8"], 7: ["#d9a54a", "#fff8eb"], 8: ["#8a6a55", "#f4ede1"],
+};
 
 const YEARS_PER_SQUARE = 10;
 const OUTER_SQUARES = 8;
@@ -115,6 +154,12 @@ function sewSquare(square) {
   squaresSewn++;
   nudgeNext();
   startIdleHint();
+  fx.buzz(10);
+  // once the fabric has unrolled, a few scraps and threads puff out of it
+  setTimeout(() => {
+    const [x, y] = fx.centerOf(square);
+    fx.burst(x, y, { count: 10, shapes: ["scrap", "thread"], colors: FABRIC_COLORS[square.dataset.fabric], speed: 3.2 });
+  }, 380);
   countUp();
 }
 
@@ -125,6 +170,7 @@ async function countUp() {
   while (shownYears < squaresSewn * YEARS_PER_SQUARE) {
     shownYears++;
     counter.textContent = `years quilted: ${shownYears} / ${AGE}`;
+    if (shownYears % YEARS_PER_SQUARE === 0) pop(counter);   // a little bounce every ten years
     await wait(40);
   }
   counting = false;
@@ -146,14 +192,30 @@ const CAKE_SVG = `
 async function quiltFinished() {
   if (finished) return;
   finished = true;
-  await wait(500);
-  // the middle square gets sewn in last, with a cake on it
+  await wait(400);
+
+  // a ripple runs across the quilt, like it's being shaken out
+  if (!reducedMotion) {
+    [...quilt.children].forEach((square, i) => {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      square.animate(
+        [{ translate: "0 0", rotate: "0deg" }, { translate: "0 -9px", rotate: i % 2 ? "2.5deg" : "-2.5deg" }, { translate: "0 0", rotate: "0deg" }],
+        { duration: 520, delay: (row + col) * 90, easing: "ease-in-out" }
+      );
+    });
+    await wait(650);
+  }
+
+  // the middle square gets sewn in last, with a cake dropping onto it
   centerSquare.innerHTML = CAKE_SVG;
   centerSquare.classList.add("sewn");
   centerSquare.setAttribute("aria-label", "A birthday cake");
-  quiltTitle.textContent = "Happy 80th, Grandma!";
-  quiltSub.textContent = "Eighty years, all sewn together.";
-  await wait(1200);
+  fx.buzz([10, 60, 10]);
+  fx.rain(70);
+  swapText(quiltTitle, "Happy 80th, Grandma!");
+  swapText(quiltSub, "Eighty years, all sewn together.");
+  await wait(1600);
   counter.hidden = true;
   toCardBtn.hidden = false;      // the way on to the card
 }
@@ -183,11 +245,16 @@ playCard.addEventListener("click", () => {
   clearTimeout(cardTimer);
   cardHint.hidden = true;
   playCard.classList.remove("nudge");
-  playCard.classList.add("dealt");    // CSS lifts it off the deck and flips it over
+  playCard.classList.add("dealt");    // CSS swings it off the deck and flips it over
   playCard.setAttribute("aria-label", `Queen of Hearts card: Happy 80th, Grandma. ${CARD_MESSAGE} ${CARD_SIGN_OFF}`);
-  cardSub.textContent = "The queen of the table, all day long.";
-  setTimeout(() => playCard.classList.add("flipped"), 950);   // after the flip finishes
-  setTimeout(() => { toWishBtn.hidden = false; }, 2200);       // give her a moment to read it
+  fx.buzz();
+  swapText(cardSub, "The queen of the table, all day long.");
+  setTimeout(() => {
+    playCard.classList.add("flipped", "shimmer");   // a gold shine sweeps across the face
+    const [x, y] = fx.centerOf(playCard);
+    fx.burst(x, y, { count: 18, shapes: ["heart"], colors: ["#b8646e", "#94434f", "#e0b04f"], speed: 5.5 });
+  }, 1050);
+  setTimeout(() => { toWishBtn.hidden = false; }, 2400);       // give her a moment to read it
 });
 
 // Make a wish
@@ -229,17 +296,22 @@ wishCard.addEventListener("submit", async (event) => {
   wishError.textContent = "";
 
   wishCard.classList.add("face-down");     // the card turns over
+  fx.buzz();
   await wait(900);
   wishText.value = "";                     // the words are gone, for real
   wishCard.classList.add("tucking");       // it slides under the deck
   await wait(950);
-  wishDeck.classList.add("shuffling");     // and the deck gets a shuffle
-  await wait(1100);
+  wishDeck.classList.add("shuffling");     // the deck fans out and squares back up
+  fx.buzz([8, 120, 8, 120, 8]);
+  await wait(1300);
   wishDeck.classList.remove("shuffling");
 
-  wishTitle.textContent = "Shuffled in.";
-  wishSub.textContent = "Your wish is in the deck now. Only you know which card it is. Happy 80th, Grandma.";
-  await wait(1200);
+  // little hearts float up from the deck, carrying the wish away
+  const [x, y] = fx.centerOf(wishDeck);
+  fx.floatUp(x, y - 40, 18);
+  swapText(wishTitle, "Shuffled in.");
+  swapText(wishSub, "Your wish is in the deck now. Only you know which card it is. Happy 80th, Grandma.");
+  await wait(1500);
   againBtn.hidden = false;
 });
 
