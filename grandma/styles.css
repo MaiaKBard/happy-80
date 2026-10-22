@@ -92,6 +92,34 @@ body {
 
 .bottom p { margin: 0; }
 
+/* Slots: a fixed-size spot where things fade in and out without moving anything else */
+.slot {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.slot > * {
+  grid-area: 1 / 1;        /* everything in a slot sits in the same spot */
+  transition: opacity 0.45s ease, translate 0.5s cubic-bezier(0.3, 1.3, 0.5, 1), visibility 0s;
+}
+
+.slot > .off {
+  opacity: 0;
+  visibility: hidden;      /* can't be tapped while it's faded out */
+  translate: 0 10px;
+  pointer-events: none;
+  transition: opacity 0.3s ease, translate 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.slot-action { min-height: 62px; }
+.slot-hint { min-height: 1.6em; }
+
+/* text that changes keeps room for its longest version, so nothing shifts */
+.title-swap { min-height: 2.3em; display: grid; place-items: center; }
+.sub-swap { min-height: 3em; display: grid; place-items: center; }
+.sub-tall { min-height: 4.5em; }
+
 /* Scenes */
 .scene {
   flex: 1;
@@ -208,12 +236,6 @@ h1 {
   box-shadow: 0 2px 0 var(--rose-deep), 0 6px 14px rgba(148, 67, 79, 0.18);
   transform: rotate(-1deg);
   cursor: pointer;
-  animation: rise-in 0.55s cubic-bezier(0.3, 1.4, 0.5, 1) both;   /* eases in whenever it appears */
-}
-
-@keyframes rise-in {
-  from { opacity: 0; translate: 0 12px; scale: 0.92; }
-  to   { opacity: 1; translate: 0 0;    scale: 1; }
 }
 
 .label-btn::before {
@@ -500,14 +522,13 @@ h1 {
   font-size: 18px;
   font-weight: 700;
   color: var(--rose-deep);
-  animation: fade-in 0.5s ease-out both;
 }
 
 /* The card table */
 .table {
   position: relative;
   isolation: isolate;               /* so a card tucked "under" the deck stays on the table */
-  width: min(78vw, 270px, 44dvh * 5 / 7);
+  width: min(78vw, 270px, 40dvh * 5 / 7);
   aspect-ratio: 5 / 7;
   margin: 6px 0 4px;
 }
@@ -741,7 +762,7 @@ h1 {
 }
 
 .wish-error {
-  min-height: 1.3em;
+  min-height: 1.5em;        /* exactly one line, so the message appearing doesn't nudge anything */
   margin: 0;
   font-weight: 700;
   color: var(--rose-deep);
@@ -761,38 +782,23 @@ h1 {
   100% { translate: -4px 2px; rotate: -2deg;  z-index: -1; }
 }
 
-/* step 3: the deck fans out, swaps around, and squares back up */
-.deck.shuffling .deck-card:nth-child(1) { animation: fan-1 1.2s ease-in-out both; }
-.deck.shuffling .deck-card:nth-child(2) { animation: fan-2 1.2s ease-in-out both; }
-.deck.shuffling .deck-card:nth-child(3) { animation: fan-3 1.2s ease-in-out both; }
-.deck.shuffling { animation: square-up 1.3s ease-in-out both; }
+/* step 3: the deck gets a quick riffle shuffle */
+.deck.shuffling .deck-card:nth-child(odd)  { animation: riffle-left 0.32s ease-in-out 3 alternate; }
+.deck.shuffling .deck-card:nth-child(even) { animation: riffle-right 0.32s ease-in-out 3 alternate; }
 
-@keyframes fan-1 {
-  30%  { translate: -46% 2%;  rotate: -16deg; }
-  60%  { translate: 34% 0;    rotate: 11deg; }
-  100% { translate: -6px 6px; rotate: -5deg; }
-}
-@keyframes fan-2 {
-  30%  { translate: 44% 2%;   rotate: 15deg; }
-  60%  { translate: -32% 0;   rotate: -10deg; }
-  100% { translate: 5px 3px;  rotate: 3deg; }
-}
-@keyframes fan-3 {
-  30%  { translate: 0 -8%;    rotate: 2deg; }
-  60%  { translate: 6% -4%;   rotate: -3deg; }
-  100% { translate: 2px -2px; rotate: -1deg; }
-}
-@keyframes square-up {
-  85%  { scale: 1; }
-  92%  { scale: 0.96; }
-  100% { scale: 1; }
+@keyframes riffle-left  { to { translate: -38% 0; rotate: -8deg; } }
+@keyframes riffle-right { to { translate: 38% 0;  rotate: 8deg; } }
+
+/* once the wish card is tucked under, it fades away so no edges peek out */
+.wish-card.gone {
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .deck-card:nth-child(3) { rotate: -1deg; translate: 2px -2px; }
 
 /* the soft "start over" link at the very end */
 .again-btn {
-  animation: rise-in 0.55s cubic-bezier(0.3, 1.4, 0.5, 1) both;
   min-height: 48px;
   padding: 0 18px;
   font: inherit;

@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <!-- the ?v= number forces browsers to load the newest file. Bump it after every change. -->
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <!-- A "hand-drawn" filter: it gently wobbles the edges of anything that uses it -->
@@ -77,23 +77,28 @@
 
     <!-- The quilt: 8 squares, one for each decade -->
     <section class="scene patch" id="scene-quilt" hidden>
-      <h1 id="quilt-title">Eighty years, one square at a time.</h1>
+      <h1 class="title-swap" id="quilt-title">Eighty years, one square at a time.</h1>
       <svg class="stitch-line" viewBox="0 0 200 12" aria-hidden="true">
         <path d="M4 6c20-6 40 6 64 0s44-6 66 0 44 6 62 0" fill="none" stroke="#8fa683" filter="url(#wobble)" />
       </svg>
-      <p class="sub" id="quilt-sub">Each square is ten years. Tap one to sew it in.</p>
+      <p class="sub sub-swap" id="quilt-sub">Each square is ten years. Tap one to sew it in.</p>
 
       <div class="quilt" id="quilt" role="group" aria-label="Quilt with nine squares"></div>
 
-      <p class="counter" id="quilt-counter" aria-live="polite">years quilted: 0 / 80</p>
-      <p class="hint" id="quilt-hint" hidden>Tap a plain square to sew it in.</p>
-      <button class="label-btn" id="to-card-btn" hidden>Deal me a card</button>
+      <!-- slots keep their size, so things fading in and out never push the quilt around -->
+      <div class="slot slot-action">
+        <p class="counter" id="quilt-counter" aria-live="polite">years quilted: 0 / 80</p>
+        <button class="label-btn off" id="to-card-btn">Deal me a card</button>
+      </div>
+      <div class="slot slot-hint">
+        <p class="hint off" id="quilt-hint">Tap a plain square to sew it in.</p>
+      </div>
     </section>
 
     <!-- The card: a Queen of Hearts dealt from the deck, with Maia's message -->
     <section class="scene patch" id="scene-card" hidden>
       <h1 id="card-title">One more thing for card night.</h1>
-      <p class="sub" id="card-sub">Tap the deck to deal your card.</p>
+      <p class="sub sub-swap" id="card-sub">Tap the deck to deal your card.</p>
 
       <div class="table">
         <!-- the deck underneath (just card backs) -->
@@ -122,14 +127,16 @@
         </button>
       </div>
 
-      <p class="hint" id="card-hint" hidden>Tap the deck to deal.</p>
-      <button class="label-btn" id="to-wish-btn" hidden>Make a wish</button>
+      <div class="slot slot-action">
+        <p class="hint off" id="card-hint">Tap the deck to deal.</p>
+        <button class="label-btn off" id="to-wish-btn">Make a wish</button>
+      </div>
     </section>
 
     <!-- The wish: written on a card, then shuffled into the deck. Never saved anywhere. -->
     <section class="scene patch" id="scene-wish" hidden>
       <h1 id="wish-title">Now, make a wish.</h1>
-      <p class="sub" id="wish-sub">Write it on a card. It gets shuffled into the deck, and no one will ever see it.</p>
+      <p class="sub sub-swap sub-tall" id="wish-sub">Write it on a card. It gets shuffled into the deck, and no one will ever see it.</p>
 
       <div class="table">
         <div class="deck" id="wish-deck" aria-hidden="true">
@@ -150,8 +157,10 @@
       </div>
 
       <p class="wish-error" id="wish-error" aria-live="polite"></p>
-      <button class="label-btn" id="shuffle-btn" type="submit" form="wish-card">Shuffle it in</button>
-      <button class="again-btn" id="again-btn" hidden>See it all again</button>
+      <div class="slot slot-action">
+        <button class="label-btn" id="shuffle-btn" type="submit" form="wish-card">Shuffle it in</button>
+        <button class="again-btn off" id="again-btn">See it all again</button>
+      </div>
     </section>
 
     <footer class="bottom">
@@ -159,7 +168,7 @@
     </footer>
   </main>
 
-  <script src="effects.js?v=5"></script>
-  <script src="main.js?v=5"></script>
+  <script src="effects.js?v=6"></script>
+  <script src="main.js?v=6"></script>
 </body>
 </html>

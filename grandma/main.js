@@ -51,11 +51,17 @@ async function goTo(from, to) {
 
 // Change some text with a soft fade instead of a sudden swap.
 async function swapText(el, text) {
+  // keep a button the same width while its words change, so it doesn't twitch
+  if (el.tagName === "BUTTON") el.style.minWidth = `${el.offsetWidth}px`;
   if (reducedMotion) { el.textContent = text; return; }
   await el.animate([{ opacity: 1 }, { opacity: 0, translate: "0 -4px" }], { duration: 180, easing: "ease-in" }).finished;
   el.textContent = text;
   el.animate([{ opacity: 0, translate: "0 4px" }, { opacity: 1, translate: "0 0" }], { duration: 320, easing: "ease-out" });
 }
+
+// Fade something in or out of its slot. Its space stays reserved, so nothing else moves.
+function show(el) { el.classList.remove("off"); }
+function hide(el) { el.classList.add("off"); }
 
 // A quick happy bounce
 function pop(el, size = 1.15) {
@@ -78,8 +84,9 @@ async function threadTheNeedle() {
   const [eyeX, eyeY] = fx.centerOf(needleArt.querySelector(".needle-eye"));
   fx.burst(eyeX, eyeY, { count: 12, shapes: ["thread", "heart"], colors: ["#b8646e", "#94434f", "#8fa683"], speed: 3.5 });
   await wait(1300);
+  buildQuilt();                   // build it first, so it's already there as the scene slides in
   await goTo(startScene, quiltScene);
-  buildQuilt();
+  startQuilt();
 }
 
 // The picture and the button both work, so any tap near it counts.
@@ -128,6 +135,10 @@ function buildQuilt() {
     square.addEventListener("click", () => sewSquare(square));
     quilt.appendChild(square);
   }
+}
+
+// Once she's looking at it: point at the first square and start the hint timer.
+function startQuilt() {
   nudgeNext();
   startIdleHint();
 }
@@ -141,9 +152,9 @@ function nudgeNext() {
 // If she hasn't tapped for 8 seconds, gently say what to do.
 function startIdleHint() {
   clearTimeout(idleTimer);
-  hint.hidden = true;
+  hide(hint);
   if (squaresSewn === OUTER_SQUARES) return;
-  idleTimer = setTimeout(() => { hint.hidden = false; }, 8000);
+  idleTimer = setTimeout(() => show(hint), 8000);
 }
 
 function sewSquare(square) {
@@ -216,8 +227,8 @@ async function quiltFinished() {
   swapText(quiltTitle, "Happy 80th, Grandma!");
   swapText(quiltSub, "Eighty years, all sewn together.");
   await wait(1600);
-  counter.hidden = true;
-  toCardBtn.hidden = false;      // the way on to the card
+  hide(counter);
+  show(toCardBtn);               // the way on to the card, in the same spot the counter was
 }
 
 // The card
@@ -236,14 +247,14 @@ toCardBtn.addEventListener("click", async () => {
   await goTo(quiltScene, cardScene);
   playCard.classList.add("nudge");
   // after 8 quiet seconds, gently say what to do
-  cardTimer = setTimeout(() => { if (!dealt) cardHint.hidden = false; }, 8000);
+  cardTimer = setTimeout(() => { if (!dealt) show(cardHint); }, 8000);
 });
 
 playCard.addEventListener("click", () => {
   if (dealt) return;
   dealt = true;
   clearTimeout(cardTimer);
-  cardHint.hidden = true;
+  hide(cardHint);
   playCard.classList.remove("nudge");
   playCard.classList.add("dealt");    // CSS swings it off the deck and flips it over
   playCard.setAttribute("aria-label", `Queen of Hearts card: Happy 80th, Grandma. ${CARD_MESSAGE} ${CARD_SIGN_OFF}`);
@@ -254,7 +265,7 @@ playCard.addEventListener("click", () => {
     const [x, y] = fx.centerOf(playCard);
     fx.burst(x, y, { count: 18, shapes: ["heart"], colors: ["#b8646e", "#94434f", "#e0b04f"], speed: 5.5 });
   }, 1050);
-  setTimeout(() => { toWishBtn.hidden = false; }, 2400);       // give her a moment to read it
+  setTimeout(() => show(toWishBtn), 2400);       // give her a moment to read it
 });
 
 // Make a wish
@@ -292,7 +303,7 @@ wishCard.addEventListener("submit", async (event) => {
   shuffled = true;
   wishText.blur();                 // put the phone keyboard away
   wishText.readOnly = true;
-  shuffleBtn.hidden = true;
+  hide(shuffleBtn);
   wishError.textContent = "";
 
   wishCard.classList.add("face-down");     // the card turns over
@@ -301,9 +312,10 @@ wishCard.addEventListener("submit", async (event) => {
   wishText.value = "";                     // the words are gone, for real
   wishCard.classList.add("tucking");       // it slides under the deck
   await wait(950);
-  wishDeck.classList.add("shuffling");     // the deck fans out and squares back up
+  wishCard.classList.add("gone");          // fully tucked away, so no edges peek out
+  wishDeck.classList.add("shuffling");     // and the deck gets a shuffle
   fx.buzz([8, 120, 8, 120, 8]);
-  await wait(1300);
+  await wait(1100);
   wishDeck.classList.remove("shuffling");
 
   // little hearts float up from the deck, carrying the wish away
@@ -312,7 +324,7 @@ wishCard.addEventListener("submit", async (event) => {
   swapText(wishTitle, "Shuffled in.");
   swapText(wishSub, "Your wish is in the deck now. Only you know which card it is. Happy 80th, Grandma.");
   await wait(1500);
-  againBtn.hidden = false;
+  show(againBtn);
 });
 
 // start the whole card over from the needle
