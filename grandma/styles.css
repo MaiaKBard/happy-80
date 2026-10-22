@@ -121,6 +121,7 @@ h1 {
   margin: 0;
   color: var(--ink-soft);
   font-size: 18px;
+  text-wrap: balance;       /* no lonely last word on its own line */
 }
 
 /* A fabric patch, sewn on with a running stitch */
@@ -270,6 +271,169 @@ h1 {
 
 @keyframes bob {
   50% { transform: translateY(-6px); }
+}
+
+/* The quilt */
+.quilt {
+  --size: min(100%, 330px, 46dvh);
+  width: var(--size);
+  aspect-ratio: 1;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);   /* every row the same height, so squares stay square */
+  gap: 5px;
+  padding: 7px;
+  background: var(--wood);           /* the quilt's binding around the edge */
+  border-radius: 6px 9px 7px 10px;
+  box-shadow: 0 3px 10px rgba(79, 61, 51, 0.18);
+  rotate: 0.8deg;                    /* slightly uneven, like real sewing */
+}
+
+/* a plain square, waiting to be sewn in */
+.square {
+  position: relative;
+  padding: 0;
+  border: 2px dashed rgba(122, 102, 88, 0.45);
+  border-radius: 3px;
+  background-color: var(--card);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.square:active { transform: scale(0.96); }
+
+.square:focus-visible {
+  outline: 3px solid var(--rose-deep);
+  outline-offset: 2px;
+}
+
+/* the next square to sew gives a little wiggle, so her eye goes to it */
+.square.nudge {
+  animation: wiggle 2.4s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 70%, 100% { rotate: 0deg; }
+  76% { rotate: -3deg; }
+  82% { rotate: 3deg; }
+  88% { rotate: -2deg; }
+  94% { rotate: 1deg; }
+}
+
+/* a sewn square: fabric drops in, then the stitches appear */
+.square.sewn {
+  border: 0;
+  cursor: default;
+  animation: drop-in 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+@keyframes drop-in {
+  from { scale: 0.6; rotate: -8deg; opacity: 0; }
+  to   { scale: 1;   rotate: 0deg;  opacity: 1; }
+}
+
+.square.sewn::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1.5px dashed rgba(255, 252, 245, 0.9);
+  border-radius: 2px;
+  animation: stitches-in 0.4s ease-out 0.35s both;
+}
+
+@keyframes stitches-in {
+  from { opacity: 0; inset: 14px; }
+  to   { opacity: 1; inset: 5px; }
+}
+
+/* the middle square waits until the very end */
+.square.center {
+  cursor: default;
+  border-style: dotted;
+  display: grid;
+  place-items: center;
+  font-family: var(--hand);
+  font-size: 30px;
+  line-height: 1;
+  color: rgba(122, 102, 88, 0.45);
+}
+
+/* for now the finished middle is plain rose; the next chunk puts the message there */
+.square.center.sewn { background: var(--rose); }
+
+/* Eight fabrics, all drawn with CSS gradients */
+.fabric-1 { /* rose gingham */
+  background-color: #f3dcdc;
+  background-image:
+    linear-gradient(90deg, rgba(184, 100, 110, 0.45) 50%, transparent 50%),
+    linear-gradient(rgba(184, 100, 110, 0.45) 50%, transparent 50%);
+  background-size: 14px 14px;
+}
+.fabric-2 { /* sage polka dot */
+  background-color: var(--sage);
+  background-image: radial-gradient(#f6f1e6 22%, transparent 24%);
+  background-size: 14px 14px;
+}
+.fabric-3 { /* honey stripes */
+  background-color: #e9c98f;
+  background-image: repeating-linear-gradient(90deg, transparent 0 7px, rgba(167, 122, 64, 0.55) 7px 10px);
+}
+.fabric-4 { /* tiny florals on cream */
+  background-color: #f7efe2;
+  background-image:
+    radial-gradient(circle at 30% 30%, var(--rose) 2.5px, transparent 3px),
+    radial-gradient(circle at 70% 70%, var(--sage) 2.5px, transparent 3px),
+    radial-gradient(circle at 70% 25%, #e0b04f 1.5px, transparent 2px);
+  background-size: 18px 18px;
+}
+.fabric-5 { /* dusty rose diamonds */
+  background-color: var(--rose);
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.18) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.18) 75%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.18) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.18) 75%);
+  background-size: 16px 16px;
+}
+.fabric-6 { /* sage check */
+  background-color: #dfe7d8;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 9px, rgba(143, 166, 131, 0.6) 9px 12px),
+    repeating-linear-gradient(90deg, transparent 0 9px, rgba(143, 166, 131, 0.6) 9px 12px);
+}
+.fabric-7 { /* mustard dots */
+  background-color: #d9a54a;
+  background-image: radial-gradient(rgba(255, 248, 235, 0.85) 18%, transparent 20%);
+  background-size: 11px 11px;
+}
+.fabric-8 { /* brown pinstripe */
+  background-color: #8a6a55;
+  background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(244, 237, 225, 0.35) 8px 9.5px);
+}
+
+.counter {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;   /* numbers don't wiggle while counting */
+}
+
+.hint {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--rose-deep);
+  animation: fade-in 0.5s ease-out both;
+}
+
+/* Shorter phones (like an iPhone SE): tighten everything so it fits */
+@media (max-height: 720px) {
+  .page { gap: 10px; }
+  .patch { padding: 24px 16px 20px; }
+  .scene { gap: 9px; }
+  h1 { font-size: 27px; }
+  .sub { font-size: 16px; }
+  .quilt { --size: min(100%, 330px, 41dvh); }
+  .counter { font-size: 18px; }
 }
 
 /* Less motion if the phone asks for it */
