@@ -31,6 +31,7 @@
       <div class="display" id="display">
         <div class="screen-bar">
           <span>BDAY-OS / 8.0</span>
+          <button class="mute" id="mute" aria-pressed="false">sound on</button>
         </div>
         <div class="terminal" id="terminal" aria-live="polite"></div>
       </div>
@@ -44,8 +45,17 @@
         </button>
         <p>press to power on</p>
       </div>
+
       <button class="skip" id="skip" hidden>skip</button>
     </section>
+
+    <nav class="commands" id="commands" aria-label="Commands" hidden>
+      <button data-cmd="wish">wish</button>
+      <button data-cmd="blow">blow</button>
+      <button data-cmd="cake">cake</button>
+      <button data-cmd="about">about</button>
+      <button data-cmd="help">help</button>
+    </nav>
 
     <footer class="case-bottom">
       <p class="tagline">80 years. One of a kind.</p>

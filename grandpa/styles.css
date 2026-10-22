@@ -394,3 +394,70 @@ body {
 
 .caption { font-size: 13px; }
 .hint { color: var(--phosphor); opacity: 0.85; }
+
+/* Commands, mute, wish/about screens */
+.big { font-size: 20px; font-weight: 600; }
+
+.block {
+  margin: 4px 0 8px;
+  font: inherit;
+  line-height: 1.15;
+}
+
+.heart {
+  color: #ffb3a7;
+  text-shadow: 0 0 8px rgba(255, 140, 120, 0.5);
+}
+
+/* the candles glow a little brighter until the first one is tapped */
+.candles.nudge .flame {
+  text-shadow: 0 0 10px rgba(243, 197, 107, 1), 0 0 22px rgba(243, 197, 107, 0.6);
+}
+
+.mute {
+  min-height: 32px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--phosphor-dim);
+  background: rgba(157, 245, 168, 0.06);
+  border: 1px solid rgba(95, 174, 107, 0.5);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.mute:focus-visible,
+.commands button:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 2px;
+}
+
+/* beige keycaps under the screen */
+.commands {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.commands button {
+  min-height: 50px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--case-ink);
+  background: #f7f2e7;
+  border: 1px solid #cbbfa6;
+  border-bottom-width: 4px;     /* gives it a chunky keyboard-key look */
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.commands button:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+.commands button.active {
+  background: #d3e6cc;
+  border-color: #9fbf95;
+}
