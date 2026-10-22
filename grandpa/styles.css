@@ -254,3 +254,32 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Boot sequence */
+.line { display: block; min-height: 1.55em; }
+.title { font-weight: 600; font-size: 20px; }
+.dim { color: var(--phosphor-dim); }
+.ok { color: #d4ffd9; }
+.warn { color: var(--amber); text-shadow: 0 0 6px rgba(243, 197, 107, 0.45); }
+
+.skip {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 6;               /* sits above the scan lines */
+  min-width: 64px;
+  min-height: 44px;         /* comfortable tap size */
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--phosphor);
+  background: rgba(157, 245, 168, 0.08);
+  border: 1px solid var(--phosphor-dim);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.skip:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 3px;
+}
