@@ -461,3 +461,34 @@ body {
   background: #d3e6cc;
   border-color: #9fbf95;
 }
+
+/* Microphone */
+.mic-btn {
+  margin-top: 4px;
+  min-height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--phosphor);
+  text-shadow: inherit;
+  background: rgba(157, 245, 168, 0.06);
+  border: 1px dashed var(--phosphor-dim);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mic-btn:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 2px;
+}
+
+.mic-btn.listening {
+  border-style: solid;
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+/* flames lean away as he blows. `translate` stacks on top of the flicker animation */
+.candles .flame {
+  translate: calc(var(--wind, 0) * 6px) 0;
+  transition: translate 0.08s linear;
+}

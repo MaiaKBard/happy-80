@@ -308,6 +308,13 @@ async function showCake(command, introLine = "") {
   updateCounter();
   cakeBox.append(counterLine, make("div", "caption dim", "1 candle = 10 years"));
   cakeBox.appendChild(make("div", "caption hint", "tap a candle to blow it out"));
+
+  // Optional: blow into the microphone. Only asks permission if he taps this.
+  if (navigator.mediaDevices?.getUserMedia) {
+    const micBtn = make("button", "mic-btn", "or blow into the mic");
+    micBtn.addEventListener("click", () => startMic(micBtn));
+    cakeBox.appendChild(micBtn);
+  }
   showCursor();
   startIdleHint();
 }
@@ -374,9 +381,93 @@ async function allOut() {
   if (wished || !counterLine.isConnected) return;
   wished = true;
   document.querySelector(".hint")?.remove();
+  stopMic();
   await wait(400);
   await typeLine([["80 = 0b01010000", "ok"]]);
   await typeLine([["still fits in a single byte. make a wish!"]]);
+}
+
+// Blow into the microphone 
+// Blowing on a mic makes a loud "whoosh" of noise. We measure how loud the
+// sound is ~60 times a second; if it stays loud for a moment, that's a blow.
+const MIC_THRESHOLD = 0.2;    // how loud counts as blowing (0 to 1). Lower = more sensitive.
+const MIC_HOLD_FRAMES = 6;    // must stay loud this many frames (~0.1s) so a quick noise doesn't count
+const MIC_COOLDOWN_MS = 300;  // at most one candle per 0.3s, so one breath ≈ one or two candles
+
+const mic = { stream: null, source: null, analyser: null, data: null, frame: 0, loud: 0, nextAllowed: 0 };
+
+async function startMic(button) {
+  button.disabled = true;
+  button.textContent = "asking for the mic...";
+  try {
+    mic.stream = await navigator.mediaDevices.getUserMedia({
+      // turn off the phone's "voice cleanup" so it doesn't filter out the blowing
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    });
+  } catch {
+    // He said no, or the phone has no mic. Tapping still works, so just say so.
+    button.remove();
+    await typeLine([["> mic: not available. tapping works too.", "dim"]]);
+    return;
+  }
+
+  if (!sound.ctx) sound.start();
+  const ctx = sound.ctx;
+  if (!ctx) { stopMic(); return; }
+  if (ctx.state === "suspended") await ctx.resume();
+
+  mic.source = ctx.createMediaStreamSource(mic.stream);
+  mic.analyser = ctx.createAnalyser();
+  mic.analyser.fftSize = 1024;
+  mic.data = new Float32Array(mic.analyser.fftSize);
+
+  // Route through a silent volume knob to the speakers. Some browsers only
+  // process audio that's connected all the way through, but we never want to
+  // actually play the mic back (that would screech).
+  const silent = ctx.createGain();
+  silent.gain.value = 0;
+  mic.source.connect(mic.analyser).connect(silent).connect(ctx.destination);
+
+  button.textContent = "listening... blow!";
+  button.classList.add("listening");
+  listen();
+}
+
+function listen() {
+  // stop if the cake left the screen or every candle is already out
+  if (!mic.analyser || !counterLine.isConnected || candlesLit === 0) {
+    stopMic();
+    return;
+  }
+
+  // RMS = average loudness of the last slice of sound
+  mic.analyser.getFloatTimeDomainData(mic.data);
+  let sum = 0;
+  for (const sample of mic.data) sum += sample * sample;
+  const loudness = Math.sqrt(sum / mic.data.length);
+
+  // make the flames lean as he blows (0 = still, 1 = blowing hard)
+  candleRow.style.setProperty("--wind", Math.min(loudness / MIC_THRESHOLD, 1).toFixed(2));
+
+  mic.loud = loudness > MIC_THRESHOLD ? mic.loud + 1 : 0;
+  const now = performance.now();
+  if (mic.loud >= MIC_HOLD_FRAMES && now >= mic.nextAllowed) {
+    const nextCandle = candleRow.querySelector(".candle:not(.out)");
+    if (nextCandle) blowOut(nextCandle);
+    mic.nextAllowed = now + MIC_COOLDOWN_MS;
+  }
+
+  mic.frame = requestAnimationFrame(listen);
+}
+
+// Turn the mic fully off, so the phone's "mic in use" indicator goes away.
+function stopMic() {
+  cancelAnimationFrame(mic.frame);
+  mic.stream?.getTracks().forEach((track) => track.stop());
+  mic.source?.disconnect();
+  Object.assign(mic, { stream: null, source: null, analyser: null, data: null, loud: 0 });
+  document.querySelector(".mic-btn")?.remove();
+  candleRow?.style.removeProperty("--wind");
 }
 
 // Commands 
