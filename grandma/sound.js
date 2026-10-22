@@ -1,6 +1,7 @@
 /*
   Sound for Grandma's card, all made with code (no audio files):
-  a soft music box playing "Happy Birthday", plus little sewing and card sounds.
+  soft chimes and gentle fabric and paper sounds, and a music box that plays
+  "Happy Birthday" once, when the cake appears.
   Phones only allow sound after a tap, so it starts when she threads the needle.
 */
 
@@ -11,14 +12,12 @@ const sound = (() => {
   let sfxBus = null;     // the sound effects go through here
   let noise = null;      // a second of static, reused for whooshes, ticks and snaps
   let on = true;
-  const VOLUME = 1.6;    // overall loudness (phone speakers are small)
-  let musicTimer = null;
-  let musicPlaying = false;
+  const VOLUME = 2.6;    // overall loudness (phone speakers are small; the limiter keeps it clean)
 
   // note names to pitches (in hertz)
   const NOTE = {
     G4: 392.0, A4: 440.0, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46,
-    G5: 783.99, A5: 880.0, B5: 987.77, C6: 1046.5, D6: 1174.66, E6: 1318.51, G6: 1567.98, C7: 2093.0,
+    G5: 783.99, A5: 880.0, B5: 987.77, C6: 1046.5,
   };
 
   // Build the sound setup. Works with a real speaker or an offline recording (used for testing).
@@ -35,7 +34,12 @@ const sound = (() => {
     limiter.ratio.value = 12;
     limiter.attack.value = 0.003;
     limiter.release.value = 0.25;
-    master.connect(limiter).connect(ctx.destination);
+    // a "warmth" filter on everything: it rolls off the sharp, tinny top end
+    const warmth = ctx.createBiquadFilter();
+    warmth.type = "lowpass";
+    warmth.frequency.value = 3200;
+    warmth.Q.value = 0.5;
+    master.connect(warmth).connect(limiter).connect(ctx.destination);
 
     // a soft echo, so the music box sounds like it's in a cozy room
     const echo = ctx.createDelay(1);
@@ -90,10 +94,10 @@ const sound = (() => {
     const t = at ?? now();
     const out = ctx.createGain();
     out.gain.setValueAtTime(0.0001, t);
-    out.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+    out.gain.exponentialRampToValueAtTime(vol, t + 0.015);    // a soft start, not a hard ping
     out.gain.exponentialRampToValueAtTime(0.0001, t + decay);
     out.connect(bus);
-    for (const [multiple, level] of [[1, 1], [2, 0.28], [3.01, 0.08]]) {
+    for (const [multiple, level] of [[1, 1], [2, 0.12]]) {     // mostly the pure note, a hint of shimmer
       const osc = ctx.createOscillator();
       osc.type = "sine";
       osc.frequency.value = freq * multiple;
@@ -144,59 +148,53 @@ const sound = (() => {
     return t - at;
   }
 
-  function startMusic() {
-    if (!ready() || musicPlaying) return;
-    musicPlaying = true;
-    const loop = () => {
-      const length = playMelody(now() + 0.1);
-      musicTimer = setTimeout(loop, (length + REST_BETWEEN) * 1000);
-    };
-    loop();
+  // The music box plays "Happy Birthday" once
+  function birthdaySong(at) {
+    if (!ready()) return 0;
+    return playMelody(at ?? now() + 0.1);
   }
 
-  // Sound effects
-  const SCALE = ["C5", "D5", "E5", "G5", "A5", "C6", "D6", "E6"];   // one note per square, going up
+  // Sound effects (all soft and low, nothing sharp)
+  const SCALE = ["C5", "D5", "E5", "F5", "G5", "A5", "B5", "C6"];   // do re mi... up to the high do
 
   const effects = {
-    // thread zipping through the needle, then a tiny chime
+    // a soft swish of thread pulling through, then a gentle chime
     threadPull(at) {
       const t = at ?? now();
-      hiss(t, { dur: 0.45, from: 500, to: 3200, vol: 0.12 });
-      bell(NOTE.E6, t + 0.42, { vol: 0.1, decay: 1.2 });
+      hiss(t, { dur: 0.5, type: "lowpass", from: 300, to: 1400, vol: 0.12 });
+      bell(NOTE.C6, t + 0.45, { vol: 0.09, decay: 1.4 });
     },
-    // chk-chk-chk-chk like a sewing machine, then this square's note
+    // a little tug of thread, then this square's note
     sew(index, at) {
       const t = at ?? now();
-      for (let i = 0; i < 4; i++) hiss(t + i * 0.07, { dur: 0.03, type: "highpass", from: 3000, to: 3000, vol: 0.12 });
-      bell(NOTE[SCALE[index % SCALE.length]], t + 0.3, { vol: 0.15, decay: 1.3 });
+      hiss(t, { dur: 0.22, type: "lowpass", from: 1200, to: 500, vol: 0.1 });
+      bell(NOTE[SCALE[index % SCALE.length]], t + 0.18, { vol: 0.14, decay: 1.4 });
     },
-    // a sparkly run up the scale when the quilt is done
+    // the music box plays the birthday song as the cake drops in
     finale(at) {
-      const t = at ?? now();
-      ["C5", "E5", "G5", "C6", "E6", "G6"].forEach((n, i) => bell(NOTE[n], t + i * 0.11, { vol: 0.13, decay: 1.6 }));
+      birthdaySong(at);
     },
-    // a card snapping off the deck, then the whoosh of it flipping
+    // a soft paper "fwip" of a card sliding off the deck and turning over
     deal(at) {
       const t = at ?? now();
-      hiss(t, { dur: 0.07, from: 2500, to: 2500, vol: 0.32, q: 1.5 });
-      hiss(t + 0.18, { dur: 0.35, type: "lowpass", from: 3000, to: 400, vol: 0.22 });
+      hiss(t, { dur: 0.28, type: "lowpass", from: 1800, to: 450, vol: 0.13 });
     },
-    // little twinkles for the gold shimmer
+    // a couple of quiet, low chimes for the gold shine
     shimmer(at) {
       const t = at ?? now();
-      ["G6", "C7", "E6", "C7", "G6"].forEach((n, i) => bell(NOTE[n], t + i * 0.09 + Math.random() * 0.03, { vol: 0.06, decay: 0.9 }));
+      ["E5", "G5", "C6"].forEach((n, i) => bell(NOTE[n], t + i * 0.16, { vol: 0.06, decay: 1.4 }));
     },
-    // the brrrrt of a riffle shuffle, three times
+    // a muffled, papery riffle, three times
     riffle(at) {
       const t = at ?? now();
       for (let r = 0; r < 3; r++) {
-        for (let i = 0; i < 12; i++) hiss(t + r * 0.32 + i * 0.022, { dur: 0.012, type: "highpass", from: 2500, to: 2500, vol: 0.16 });
+        hiss(t + r * 0.32, { dur: 0.26, type: "lowpass", from: 1400, to: 700, vol: 0.09, q: 0.4 });
       }
     },
     // gentle rising chimes as the hearts float away
     wishUp(at) {
       const t = at ?? now();
-      ["C5", "E5", "G5", "B5", "D6"].forEach((n, i) => bell(NOTE[n], t + i * 0.22, { vol: 0.11, decay: 1.8 }));
+      ["C5", "E5", "G5", "C6"].forEach((n, i) => bell(NOTE[n], t + i * 0.28, { vol: 0.1, decay: 2 }));
     },
   };
 
@@ -214,5 +212,5 @@ const sound = (() => {
     else ctx.resume();
   });
 
-  return { start, setup, startMusic, playMelody, toggle, isOn: () => on, ...effects };
+  return { start, setup, playMelody, toggle, isOn: () => on, ...effects };
 })();

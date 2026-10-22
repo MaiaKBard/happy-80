@@ -87,7 +87,6 @@ async function threadTheNeedle() {
   fx.burst(eyeX, eyeY, { count: 12, shapes: ["thread", "heart"], colors: ["#b8646e", "#94434f", "#8fa683"], speed: 3.5 });
   await wait(1300);
   buildQuilt();                   // build it first, so it's already there as the scene slides in
-  sound.startMusic();             // the music box begins softly
   await goTo(startScene, quiltScene);
   startQuilt();
 }
