@@ -3,7 +3,7 @@
   Hi Grandpa. Yes, I wrote this for you. Happy 80th. Love, Maia
 */
 
-// ---------- Your words (edit these) ----------
+// Your words (edit these)
 const WISH_MESSAGE = [
   "Wishing you a day full of",
   "good food, good people,",
@@ -11,7 +11,7 @@ const WISH_MESSAGE = [
 ];
 const SIGN_OFF = "Love, Maia";
 
-// ---------- Grab the elements we need ----------
+// Grab the elements we need
 const display = document.getElementById("display");
 const terminal = document.getElementById("terminal");
 const power = document.getElementById("power");
@@ -29,7 +29,7 @@ let skipping = false;
 // True while a command is printing, so two commands never type at once.
 let busy = false;
 
-// ---------- Small helpers ----------
+// Small helpers
 
 // Pause for `ms` milliseconds. Lets us write async code that reads top to bottom.
 function wait(ms) {
@@ -111,7 +111,7 @@ async function progressBar() {
   }
 }
 
-// ---------- Sound (made with code, no audio files) ----------
+// Sound (made with code, no audio files)
 // Browsers only allow sound after a tap, so it starts on the power button.
 const sound = {
   ctx: null,
@@ -192,7 +192,7 @@ muteBtn.addEventListener("click", () => {
   muteBtn.setAttribute("aria-pressed", String(!sound.on));
 });
 
-// ---------- Boot sequence ----------
+// Boot sequence
 async function boot() {
   skipBtn.hidden = false;
 
@@ -226,7 +226,7 @@ skipBtn.addEventListener("click", () => {
   skipBtn.hidden = true;
 });
 
-// ---------- The cake ----------
+// The cake
 const CANDLES = 8;            // 8 candles x 10 years = 80
 const YEARS_PER_CANDLE = 10;
 const CAKE_WIDTH = 30;        // characters inside the cake's side walls
@@ -384,7 +384,7 @@ async function allOut() {
   await typeLine([["still fits in a single byte. make a wish!"]]);
 }
 
-// ---------- Blow into the microphone ----------
+// Blow into the microphone
 // Blowing on a mic makes a loud "whoosh" of noise. We measure how loud the
 // sound is ~60 times a second; if it stays loud for a moment, that's a blow.
 const MIC_THRESHOLD = 0.2;    // how loud counts as blowing (0 to 1). Lower = more sensitive.
@@ -516,7 +516,64 @@ function stopMic() {
   candleRow?.style.removeProperty("--wind");
 }
 
-// ---------- Commands ----------
+// Make a wish
+// He types a wish and sends it to /dev/null, the computer's built-in void.
+// Nothing is saved or sent anywhere. It only ever exists on his screen.
+function showWishBox() {
+  const form = make("form", "wish-form");
+  form.innerHTML = `
+    <label for="wish-input" class="wish-label">&gt; make a wish:</label>
+    <div class="wish-row">
+      <input id="wish-input" type="text" maxlength="120" autocomplete="off"
+             autocapitalize="sentences" enterkeyhint="send" placeholder="type it here">
+      <button type="submit" class="wish-send">send</button>
+    </div>
+    <div class="wish-error" aria-live="polite"></div>`;
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();   // stop the page from reloading
+    if (busy) return;
+    runTask(() => sendWish(form));
+  });
+  form.querySelector("input").addEventListener("input", () => {
+    form.querySelector(".wish-error").textContent = "";
+  });
+  removeCursor();
+  terminal.appendChild(form);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+async function sendWish(form) {
+  const input = form.querySelector("input");
+  const wishText = input.value.trim();
+  if (!wishText) {
+    form.querySelector(".wish-error").textContent = "type a wish first";
+    input.focus();
+    return;
+  }
+
+  input.blur();               // put the phone keyboard away
+  input.readOnly = true;
+  form.querySelector(".wish-send").remove();
+
+  // the wish erases itself, letter by letter, into the void
+  for (let i = wishText.length; i >= 0; i--) {
+    input.value = wishText.slice(0, i);
+    if (i % 2 === 0) sound.click();
+    await wait(30);
+  }
+  form.remove();
+
+  await typeLine([["> sending wish..."]]);
+  await progressBar();
+  await typeLine([["wish sent to /dev/null ", "ok"], ["OK", "ok", 300]]);
+  await typeLine([["(that's the void.", "dim"]]);
+  await typeLine([["it wasn't saved anywhere.", "dim"]]);
+  await typeLine([["not even Maia can read it.)", "dim"]]);
+  await typeLine([[""]]);
+  await typeLine([["May it come true.", "big"]]);
+}
+
+// Commands
 const HEART = [
   " .:::.   .:::. ",
   ":::::::.:::::::",
@@ -530,10 +587,6 @@ const HEART = [
 const COMMANDS = {
   async cake() {
     await showCake("cake");
-  },
-
-  async blow() {
-    await showCake("blow", "One big breath.");
     // If he already said yes to the mic earlier, start listening right away.
     if (mic.allowed) startMic();
   },
@@ -549,6 +602,8 @@ const COMMANDS = {
     for (const line of WISH_MESSAGE) await typeLine([[line]]);
     await typeLine([[""]]);
     await typeLine([[SIGN_OFF, "dim"]]);
+    await typeLine([[""]]);
+    showWishBox();
   },
 
   async about() {
@@ -569,9 +624,8 @@ const COMMANDS = {
     terminal.innerHTML = "";
     await typeLine([["> help", "dim"]]);
     await typeLine([[""]]);
-    await typeLine([["wish   ", "ok"], ["a message from Maia"]]);
-    await typeLine([["blow   ", "ok"], ["blow out the candles"]]);
-    await typeLine([["cake   ", "ok"], ["bring the cake back"]]);
+    await typeLine([["wish   ", "ok"], ["a message, and make a wish"]]);
+    await typeLine([["cake   ", "ok"], ["the cake and candles"]]);
     await typeLine([["about  ", "ok"], ["who made this"]]);
     await typeLine([["help   ", "ok"], ["show this list"]]);
   },
@@ -583,21 +637,15 @@ function setActive(name) {
   }
 }
 
-let queued = null;            // a command tapped while another was still printing
+let queued = null;            // a command tapped while something was still printing
 
-async function runCommand(name) {
-  setActive(name);
-  if (busy) {
-    // Something is still typing: finish it instantly, then run the new one.
-    queued = name;
-    skipping = true;
-    return;
-  }
+// Run one piece of printing work at a time. If a command gets tapped
+// meanwhile, the current work finishes instantly and the new one runs after.
+async function runTask(task) {
   busy = true;
-  sound.click();
   try {
     await rolling;            // if the countdown is mid-roll, let it finish first
-    await COMMANDS[name]();
+    await task();
   } finally {
     busy = false;             // always unlock, even if something goes wrong
     skipping = false;
@@ -609,12 +657,23 @@ async function runCommand(name) {
   }
 }
 
+function runCommand(name) {
+  setActive(name);
+  if (busy) {
+    queued = name;
+    skipping = true;
+    return;
+  }
+  sound.click();
+  runTask(COMMANDS[name]);
+}
+
 commands.addEventListener("click", (event) => {
   const btn = event.target.closest("button[data-cmd]");
   if (btn) runCommand(btn.dataset.cmd);
 });
 
-// ---------- Power on ----------
+// Power on
 async function powerOn() {
   sound.start();                  // the tap gives the browser permission to play sound
   sound.beep();

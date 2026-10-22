@@ -437,7 +437,7 @@ body {
 /* beige keycaps under the screen */
 .commands {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -540,3 +540,66 @@ body {
   .counter { font-size: 16px; margin-top: 2px; }
   .choice { gap: 6px; }
 }
+
+/* Make a wish */
+.wish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.wish-label { color: var(--phosphor); }
+
+.wish-row {
+  display: flex;
+  gap: 8px;
+}
+
+#wish-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 16px;          /* 16px or bigger stops iPhones from zooming in */
+  color: var(--phosphor);
+  caret-color: var(--phosphor);
+  text-shadow: inherit;
+  background: rgba(157, 245, 168, 0.06);
+  border: 1px solid var(--phosphor-dim);
+  border-radius: 8px;
+}
+
+#wish-input::placeholder { color: var(--phosphor-dim); opacity: 0.7; }
+
+#wish-input:focus {
+  outline: none;
+  border-color: var(--phosphor);
+  box-shadow: 0 0 0 2px rgba(157, 245, 168, 0.25);
+}
+
+.wish-send {
+  min-height: 46px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--phosphor);
+  text-shadow: inherit;
+  background: rgba(157, 245, 168, 0.12);
+  border: 1px solid var(--phosphor);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.wish-send:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 2px;
+}
+
+.wish-error {
+  min-height: 1.2em;
+  font-size: 13px;
+  color: var(--amber);
+}
+
